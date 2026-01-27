@@ -19,6 +19,7 @@ from django.urls import path, include
 from users import urls as users_urls
 from users import views as login_views
 from config import views as config_views
+from document import urls as document_urls
 
 urlpatterns = [
     # urls.py
@@ -26,4 +27,5 @@ urlpatterns = [
     path('test/', login_views.index, name='index'),
     path('admin/', admin.site.urls),
     path('users/', include(users_urls.urlpatten)),
+    path('document/', include(document_urls.urlpatten)),
 ]

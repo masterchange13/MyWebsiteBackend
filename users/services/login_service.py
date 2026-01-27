@@ -1,11 +1,13 @@
 import json
 from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_protect
-from django.views.decorators.http import require_POST
 
 def test(request):
     return HttpResponse('<h1> hello test')
 
+# 用户登录功能函数
+# 该函数用于处理用户的登录请求
+# 参数:
+#     request: 包含用户请求信息的对象，可能包含用户名、密码等信息
 def login(request):
     data = json.loads(request.body)
 
