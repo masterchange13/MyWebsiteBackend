@@ -1,0 +1,9 @@
+from django.urls import path
+from users import views
+
+urlpatten = [
+        path('login/', views.login),
+        path('test/', views.test),
+        path('getAllNavigators/', views.get_all_navigators),
+        path('save_icon/', views.save_icon),
+]

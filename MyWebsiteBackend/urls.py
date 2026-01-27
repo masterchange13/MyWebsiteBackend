@@ -16,9 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from login import urls
+from users import urls as users_urls
+from users import views as login_views
+from config import views as config_views
 
 urlpatterns = [
+    # urls.py
+    path("csrf/", config_views.csrf),
+    path('test/', login_views.index, name='index'),
     path('admin/', admin.site.urls),
-    path('login/', include(urls.urlpatten)),
+    path('users/', include(users_urls.urlpatten)),
 ]
