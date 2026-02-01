@@ -1,5 +1,6 @@
 import json
 from django.http import JsonResponse, HttpResponse
+from users.models.user_model import User
 
 def test(request):
     return HttpResponse('<h1> hello test')
@@ -14,7 +15,9 @@ def login(request):
     username = data.get('username')
     password = data.get('password')
 
-    if username == 'admin' and password == 'admin':
+    ret = User.objects.get(username=username, password=password)
+
+    if ret:
         request.session['user'] = username   # 建立 session
         return JsonResponse({'success': True})
     else:
