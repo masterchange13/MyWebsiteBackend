@@ -20,6 +20,7 @@ from users import urls as users_urls
 from users import views as login_views
 from config import views as config_views
 from document import urls as document_urls
+from to_do_list import urls as to_do_list_urls
 
 urlpatterns = [
     # urls.py
@@ -28,4 +29,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include(users_urls.urlpatten)),
     path('document/', include(document_urls.urlpatten)),
+    path('todo/', include(to_do_list_urls.urlpatten)),
 ]

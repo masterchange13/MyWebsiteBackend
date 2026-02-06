@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'chat',
     'document',
     'file',
+    'to_do_list',
 ]
 
 MIDDLEWARE = [
