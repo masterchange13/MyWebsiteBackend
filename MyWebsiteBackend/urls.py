@@ -21,6 +21,8 @@ from users import views as login_views
 from config import views as config_views
 from document import urls as document_urls
 from to_do_list import urls as to_do_list_urls
+from music import urls as music_urls
+
 
 urlpatterns = [
     # urls.py
@@ -30,4 +32,8 @@ urlpatterns = [
     path('users/', include(users_urls.urlpatten)),
     path('document/', include(document_urls.urlpatten)),
     path('todo/', include(to_do_list_urls.urlpatten)),
+    # music/
+    path('music/', include(music_urls.urlpatten)),
+    path('media/music/', include(music_urls.media_url)),
+
 ]

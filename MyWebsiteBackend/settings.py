@@ -135,3 +135,5 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
 ]
 CSRF_COOKIE_HTTPONLY = False
+
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
