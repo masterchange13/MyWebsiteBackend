@@ -9,4 +9,4 @@ class Music(models.Model):
     artist = models.CharField(max_length=100)
     cover = models.ImageField(upload_to='media/music/covers/', default='')
     audio = models.FileField(upload_to='media/music/audio/')  # ← 真正存 mp3
-    url = models.CharField(max_length=200, default='')   # 可做外链备用
+    url = models.TextField(blank=True)
