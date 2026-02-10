@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_protect
-from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_http_methods
 
 from users.services import login_service
 
@@ -31,4 +31,16 @@ def save_icon(request):
 
 def get_all_navigators(request):
     res = navigator_service.get_all_navigators(request)
+    return res
+
+@csrf_protect
+@require_POST
+def add_icon(request):
+    res = navigator_service.add_icon(request)
+    return res
+
+@csrf_protect
+@require_http_methods(["DELETE"])
+def remove_icon(request):
+    res = navigator_service.remove_icon(request)
     return res

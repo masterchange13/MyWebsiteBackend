@@ -22,3 +22,15 @@ def save_icon(request):
     )
 
     return JsonResponse({'code': 200, 'data': 'Icon saved successfully'})
+
+def remove_icon(request):
+    try:
+        raw = request.body or b''
+        data = json.loads(raw.decode('utf-8')) if raw else {}
+    except Exception as e:
+        data = {}
+    navigator_id = data.get('id') or request.GET.get('id')
+    if not navigator_id:
+        return JsonResponse({'code': 400, 'message': 'id is required'})
+    Navigator.objects.filter(id=navigator_id).delete()
+    return JsonResponse({'code': 200, 'data': 'Icon removed successfully'})

@@ -6,4 +6,6 @@ urlpatten = [
         path('test/', views.test),
         path('getAllNavigators/', views.get_all_navigators),
         path('save_icon/', views.save_icon),
+        path('add_icon/', views.add_icon),
+        path('remove_icon/', views.remove_icon),
 ]
