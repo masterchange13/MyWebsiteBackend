@@ -131,9 +131,27 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+ALLOWED_HOSTS = ['*']
+
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
+    "http://raspberrypi",
+    "http://masterchange.natapp1.cc",
+    "https://masterchange.natapp1.cc",
 ]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "http://masterchange.natapp1.cc",
+    "https://masterchange.natapp1.cc",
+    "http://raspberrypi",
+]
+
+# 👇 关键就是这 3 行（很多教程没写）
 CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = False   # 因为你现在是 http，不是 https
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 # MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
