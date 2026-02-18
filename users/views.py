@@ -4,7 +4,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from users.services import login_service
+from users.services import user_service
 
 from users.services import navigator_service 
 
@@ -16,11 +16,11 @@ def index(request):
 @require_POST
 @csrf_exempt
 def login(request):
-    res = login_service.login(request)
+    res = user_service.login(request)
     return res
 
 def test(request):
-    res = login_service.test(request)
+    res = user_service.test(request)
     return res
 
 @require_POST
@@ -40,4 +40,12 @@ def add_icon(request):
 @require_http_methods(["DELETE"])
 def remove_icon(request):
     res = navigator_service.remove_icon(request)
+    return res
+
+def get_me(request):
+    res = user_service.get_me(request)
+    return 
+
+def get_user_detail(request):
+    res = user_service.get_user_detail(request)
     return res

@@ -8,4 +8,6 @@ urlpatten = [
         path('save_icon/', views.save_icon),
         path('add_icon/', views.add_icon),
         path('remove_icon/', views.remove_icon),
+        path('me/', views.get_me),
+        path('detail/', views.get_user_detail),
 ]
