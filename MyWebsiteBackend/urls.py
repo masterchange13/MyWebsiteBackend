@@ -23,6 +23,7 @@ from document import urls as document_urls
 from to_do_list import urls as to_do_list_urls
 from music import urls as music_urls
 from agent import urls as agent_urls
+from chat import urls as chat_urls
 
 urlpatterns = [
     # urls.py
@@ -37,4 +38,6 @@ urlpatterns = [
     path('media/music/', include(music_urls.media_url)),
     # agent/
     path('agent/', include(agent_urls.urlpatten)),
+    # chat
+    path('chat/', include(chat_urls.urlpatten)),
 ]

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'users',
     'config',
     'music',
@@ -74,6 +75,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'MyWebsiteBackend.wsgi.application'
+ASGI_APPLICATION = 'MyWebsiteBackend.asgi.application'
 
 
 # Database
@@ -155,3 +157,10 @@ CSRF_COOKIE_SECURE = False   # 因为你现在是 http，不是 https
 SESSION_COOKIE_SAMESITE = 'Lax'
 
 # MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Channels
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}

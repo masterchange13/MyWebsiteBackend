@@ -1,3 +1,7 @@
-from django.shortcuts import render
+from chat.services import chat_service
 
-# Create your views here.
+def get_users(request):
+    return chat_service.get_users(request)
+
+def get_history(request):
+    return chat_service.get_history(request)
