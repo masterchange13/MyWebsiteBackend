@@ -11,7 +11,7 @@ def publish(request):
         content = data.get('content')
         # 保存数据到数据库
         Document.objects.create(author=author, content=content)
-        return JsonResponse({'code' : 200, 'message': 'Document published successfully'})
+        return JsonResponse({'code': 200, 'message': 'Document published successfully', 'data': {}})
     else:
         return HttpResponse(status=405)  # Method Not Allowed
     

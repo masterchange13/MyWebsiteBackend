@@ -22,7 +22,7 @@ from config import views as config_views
 from document import urls as document_urls
 from to_do_list import urls as to_do_list_urls
 from music import urls as music_urls
-
+from agent import urls as agent_urls
 
 urlpatterns = [
     # urls.py
@@ -35,5 +35,6 @@ urlpatterns = [
     # music/
     path('music/', include(music_urls.urlpatten)),
     path('media/music/', include(music_urls.media_url)),
-
+    # agent/
+    path('agent/', include(agent_urls.urlpatten)),
 ]

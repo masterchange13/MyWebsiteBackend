@@ -54,7 +54,7 @@ def upload_music(request):
         music.url = request.build_absolute_uri(music.audio.url)
         music.save()
 
-        return JsonResponse({'code': 200, 'message': '音乐上传成功', 'music': music.url})
+        return JsonResponse({'code': 200, 'message': '音乐上传成功', 'data': {'url': music.url}})
 
 # media
 def get_audio(request, filename):

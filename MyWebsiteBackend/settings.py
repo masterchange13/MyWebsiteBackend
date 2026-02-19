@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'document',
     'file',
     'to_do_list',
+    'agent',
 ]
 
 MIDDLEWARE = [
