@@ -45,3 +45,17 @@ def get_user_detail(request):
         return JsonResponse({'code': 200, 'message': 'success', 'data': data})
     except User.DoesNotExist:
         return JsonResponse({'code': 404, 'message': '用户不存在', 'data': {}}, status=404)
+
+def register(request):
+    data = json.loads(request.body or '{}')
+    username = data.get('username')
+    password = data.get('password')
+    email = data.get('email')
+    if not username or not password or not email:
+        return JsonResponse({'code': 400, 'message': '缺少必填字段', 'data': {}}, status=400)
+    if User.objects.filter(username=username).exists():
+        return JsonResponse({'code': 409, 'message': '用户名已存在', 'data': {}}, status=409)
+    if User.objects.filter(email=email).exists():
+        return JsonResponse({'code': 409, 'message': '邮箱已存在', 'data': {}}, status=409)
+    u = User.objects.create(username=username, password=password, email=email)
+    return JsonResponse({'code': 200, 'message': '注册成功', 'data': {'id': u.id, 'username': u.username, 'email': u.email}})

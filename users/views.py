@@ -7,6 +7,7 @@ from django.views.decorators.http import require_http_methods
 from users.services import user_service
 
 from users.services import navigator_service 
+from users.services import admin_owner_service
 
 # Create your views here.
 
@@ -48,4 +49,13 @@ def get_me(request):
 
 def get_user_detail(request):
     res = user_service.get_user_detail(request)
+    return res
+
+def assign_admin_owner(request):
+    res = admin_owner_service.assign_admin_owner(request)
+    return res
+
+@require_POST
+def register(request):
+    res = user_service.register(request)
     return res
