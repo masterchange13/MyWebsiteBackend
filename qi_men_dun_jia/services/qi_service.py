@@ -6,7 +6,7 @@ from users.models.user_model import User
 from qi_men_dun_jia.models import QimenCalculation, QimenPalace
 from qi_men_dun_jia.services.deepseek_client import call_deepseek
 import os
-from datetime import datetime as dtmod
+from django.utils import timezone
 
 def _safe_parse_datetime(dt_str: str):
     fmts = ["%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y/%m/%d %H:%M"]
@@ -51,6 +51,8 @@ def calc(request):
     solar = bool(data.get('solar', True))
 
     dt = _safe_parse_datetime(dt_str) if dt_str else None
+    if dt and timezone.is_naive(dt):
+        dt = timezone.make_aware(dt, timezone.get_current_timezone())
     seed = _seed_from(dt, location, topic, solar)
     chart = _gen_simple_chart(seed, topic)
 
@@ -87,7 +89,7 @@ def calc(request):
             calc.analysis_text = text
             calc.analysis_provider = 'deepseek'
             calc.analysis_model = os.environ.get('DEEPSEEK_MODEL', 'deepseek-reasoner')
-            calc.analysis_time = dtmod.utcnow()
+            calc.analysis_time = timezone.now()
             calc.save()
         else:
             return JsonResponse({'code': 502, 'message': f'分析失败: {err}', 'data': {'id': calc.id}})
@@ -107,7 +109,7 @@ def calc(request):
         'id': calc.id,
         'analysis': {'text': calc.analysis_text, 'provider': calc.analysis_provider, 'model': calc.analysis_model} if calc.analysis_text else None,
     }
-    print("anslaysis", calc.analysis_text)
+    # print("anslaysis", calc.analysis_text)
     return JsonResponse({'code': 200, 'message': 'success', 'data': resp})
 
 def analyze(request):
@@ -131,7 +133,7 @@ def analyze(request):
         calc.analysis_text = text
         calc.analysis_provider = 'deepseek'
         calc.analysis_model = os.environ.get('DEEPSEEK_MODEL', 'deepseek-reasoner')
-        calc.analysis_time = dtmod.utcnow()
+        calc.analysis_time = timezone.now()
         calc.save()
         return JsonResponse({'code': 200, 'message': 'success', 'data': {'id': calc.id, 'analysis': {'text': text, 'provider': calc.analysis_provider, 'model': calc.analysis_model}}})
     else:
