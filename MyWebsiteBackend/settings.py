@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'file',
     'to_do_list',
     'agent',
+    'qi_men_dun_jia',
 ]
 
 MIDDLEWARE = [

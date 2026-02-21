@@ -24,6 +24,7 @@ from to_do_list import urls as to_do_list_urls
 from music import urls as music_urls
 from agent import urls as agent_urls
 from chat import urls as chat_urls
+from qi_men_dun_jia import urls as qmdj_urls
 
 urlpatterns = [
     # urls.py
@@ -40,4 +41,6 @@ urlpatterns = [
     path('agent/', include(agent_urls.urlpatten)),
     # chat
     path('chat/', include(chat_urls.urlpatten)),
+    # qmdj
+    path('qimen/', include(qmdj_urls.urlpatten)),
 ]
