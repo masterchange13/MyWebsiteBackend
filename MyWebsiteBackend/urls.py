@@ -25,6 +25,7 @@ from music import urls as music_urls
 from agent import urls as agent_urls
 from chat import urls as chat_urls
 from qi_men_dun_jia import urls as qmdj_urls
+from file import urls as file_urls
 
 urlpatterns = [
     # urls.py
@@ -43,4 +44,6 @@ urlpatterns = [
     path('chat/', include(chat_urls.urlpatten)),
     # qmdj
     path('qimen/', include(qmdj_urls.urlpatten)),
+    # file
+    path('file/', include(file_urls.urlpatten)),
 ]
