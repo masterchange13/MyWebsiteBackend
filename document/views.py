@@ -10,3 +10,7 @@ def publish(request):
 def get_all(request):
     res = document_service.get_all(request)
     return res
+
+def detail(request):
+    res = document_service.detail(request)
+    return res
