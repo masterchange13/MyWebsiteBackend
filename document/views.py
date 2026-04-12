@@ -11,6 +11,6 @@ def get_all(request):
     res = document_service.get_all(request)
     return res
 
-def detail(request):
-    res = document_service.detail(request)
+def detail(request, document_id=None):
+    res = document_service.detail(request, document_id=document_id)
     return res

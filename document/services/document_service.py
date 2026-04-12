@@ -36,14 +36,14 @@ def get_all(request):
             'data': data
         })
 
-def detail(request):
-    if request.method != 'GET':
-        return HttpResponse(status=405)
+def detail(request, document_id=None):
+    # if request.method != 'GET':
+        # return HttpResponse(status=405)
 
-    document_id = request.GET.get('id')
+    document_id = document_id or request.GET.get('document_id') or request.GET.get('id')
     print('document_id is ', document_id)
     if not document_id:
-        return JsonResponse({'code': 400, 'message': 'id is required', 'data': {}}, status=400)
+        return JsonResponse({'code': 400, 'message': 'document_id is required', 'data': {}}, status=400)
 
     try:
         doc = Document.objects.select_related('user').get(id=document_id)
