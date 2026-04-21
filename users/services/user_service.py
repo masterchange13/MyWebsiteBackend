@@ -31,16 +31,23 @@ def get_me(request):
         return JsonResponse({'code': 400, 'message': '未登录', 'data': {}}, status=400)
 
 def get_user_detail(request):
+    if request.method != 'GET':
+        return HttpResponse(status=405)
+
     username = request.GET.get('username') or request.GET.get('name')
-    if not username:
+    user_id = request.GET.get('id')
+    if not username and not user_id:
         return JsonResponse({'code': 400, 'message': 'username is required', 'data': {}}, status=400)
     try:
-        u = User.objects.get(username=username)
+        if user_id:
+            u = User.objects.get(id=user_id)
+        else:
+            u = User.objects.get(username=username)
         data = {
             'id': u.id,
             'username': u.username,
             'email': u.email,
-            'created_time': u.created_time,
+            'created_time': u.created_time.isoformat() if u.created_time else None,
         }
         return JsonResponse({'code': 200, 'message': 'success', 'data': data})
     except User.DoesNotExist:

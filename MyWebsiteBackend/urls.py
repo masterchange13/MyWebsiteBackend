@@ -24,6 +24,7 @@ from to_do_list import urls as to_do_list_urls
 from music import urls as music_urls
 from agent import urls as agent_urls
 from chat import urls as chat_urls
+from chat import routing as ws_urls
 from qi_men_dun_jia import urls as qmdj_urls
 from file import urls as file_urls
 

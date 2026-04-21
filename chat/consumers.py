@@ -9,6 +9,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         query = parse_qs(self.scope['query_string'].decode() if self.scope.get('query_string') else '')
         self.username = (query.get('username') or [''])[0]
+        self.peer = (query.get('peer') or [''])[0]
         if self.username:
             await sync_to_async(User.objects.get_or_create)(
                 username=self.username,
@@ -33,8 +34,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except Exception:
             data = {}
         message = data.get('data') or data.get('message') or data.get('content') or ''
-        to = data.get('receiveUsername') or data.get('to') or data.get('receiver') or ''
-        sender_name = self.username
+        to = data.get('receiveUsername') or data.get('to') or data.get('receiver') or self.peer or ''
+        sender_name = self.username or data.get('sendUsername') or data.get('from') or ''
         # 保存消息
         sender = await sync_to_async(lambda: User.objects.filter(username=sender_name).first())() if sender_name else None
         # 如果对方用户不存在，自动创建占位账号，保证持久化与历史查询一致
