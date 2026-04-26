@@ -14,3 +14,7 @@ def get_all(request):
 def detail(request, document_id=None):
     res = document_service.detail(request, document_id=document_id)
     return res
+
+def remove(request, document_id):
+    res = document_service.remove(request, document_id=document_id)
+    return res

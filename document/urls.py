@@ -6,4 +6,5 @@ urlpatten = [
         path('getAll/', views.get_all),
         path('detail/<int:document_id>/', views.detail),
         path('detail/', views.detail),
+        path('remove/<int:document_id>/', views.remove),
 ]

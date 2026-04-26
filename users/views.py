@@ -45,10 +45,10 @@ def remove_icon(request):
 
 def get_me(request):
     res = user_service.get_me(request)
-    return 
+    return res
 
-def get_user_detail(request):
-    res = user_service.get_user_detail(request)
+def get_user_detail(request, user_id=None):
+    res = user_service.get_user_detail(request, user_id=user_id)
     return res
 
 def assign_admin_owner(request):

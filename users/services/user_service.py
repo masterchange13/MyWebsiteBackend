@@ -25,19 +25,26 @@ def login(request):
 
 def get_me(request):
     user = request.session.get('user')
+    user_id = User.objects.get(username=user).id
+    data = {
+        'id': user_id,
+        'username': user,
+        'email': User.objects.get(id=user_id).email,
+        'created_time': User.objects.get(id=user_id).created_time.isoformat() if User.objects.get(id=user_id).created_time else None,
+    }
     if user:
-        return JsonResponse({'code': 200, 'message': 'success', 'data': user})
+        return JsonResponse({'code': 200, 'message': 'success', 'data': data})
     else:
         return JsonResponse({'code': 400, 'message': '未登录', 'data': {}}, status=400)
 
-def get_user_detail(request):
+def get_user_detail(request, user_id=None):
     if request.method != 'GET':
         return HttpResponse(status=405)
 
     username = request.GET.get('username') or request.GET.get('name')
-    user_id = request.GET.get('id')
+    user_id = user_id or request.GET.get('id')
     if not username and not user_id:
-        return JsonResponse({'code': 400, 'message': 'username is required', 'data': {}}, status=400)
+        return JsonResponse({'code': 400, 'message': 'id or username is required', 'data': {}}, status=400)
     try:
         if user_id:
             u = User.objects.get(id=user_id)

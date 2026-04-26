@@ -9,6 +9,8 @@ urlpatten = [
         path('add_icon/', views.add_icon),
         path('remove_icon/', views.remove_icon),
         path('me/', views.get_me),
+        path('detail/<int:user_id>/', views.get_user_detail),
+        path('detail', views.get_user_detail),
         path('detail/', views.get_user_detail),
         path('register/', views.register),
         path('assignAdminOwner/', views.assign_admin_owner),
