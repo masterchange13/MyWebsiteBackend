@@ -1,7 +1,8 @@
 import json
+import threading
 from datetime import datetime
 from django.http import JsonResponse
-from asgiref.sync import sync_to_async
+from django.db import close_old_connections
 from users.models.user_model import User
 from qi_men_dun_jia.models import QimenCalculation, QimenPalace
 from qi_men_dun_jia.services.deepseek_client import call_deepseek
@@ -40,6 +41,78 @@ def _gen_simple_chart(seed: int, topic: str):
         })
     return palaces
 
+def _build_analysis_prompt(calc: QimenCalculation, palaces):
+    return f"时间：{calc.datetime_str}\n地点：{calc.location}\n主题：{calc.topic}\n阳历：{calc.solar}\n\n九宫：\n" + "\n".join(
+        [f"{p['index']}宫 门:{p['gate']} 星:{p['star']} 神:{p['god']} 提示:{p['tip']}" for p in palaces]
+    ) + "\n\n请结合主题给出分析与建议。"
+
+def _serialize_calc(calc: QimenCalculation):
+    palaces = list(calc.palaces.order_by('index').values('index', 'gate', 'star', 'god', 'tip'))
+    return {
+        'input': {
+            'datetime': calc.datetime_str,
+            'location': calc.location,
+            'topic': calc.topic,
+            'solar': calc.solar,
+        },
+        'meta': {
+            'parsed_datetime': calc.parsed_datetime.isoformat() if calc.parsed_datetime else None,
+            'seed': calc.seed,
+        },
+        'chart': palaces,
+        'id': calc.id,
+        'analysis_status': calc.analysis_status,
+        'analysis_error': calc.analysis_error,
+        'analysis': {
+            'text': calc.analysis_text,
+            'provider': calc.analysis_provider,
+            'model': calc.analysis_model,
+        } if calc.analysis_text else None,
+    }
+
+def _run_analysis(calc_id: int, api_key: str = ''):
+    close_old_connections()
+    try:
+        calc = QimenCalculation.objects.filter(id=calc_id).first()
+        if not calc:
+            return
+        calc.analysis_status = 'running'
+        calc.analysis_error = ''
+        calc.save(update_fields=['analysis_status', 'analysis_error'])
+
+        palaces = list(calc.palaces.order_by('index').values('index', 'gate', 'star', 'god', 'tip'))
+        prompt = _build_analysis_prompt(calc, palaces)
+        text, err = call_deepseek(api_key, prompt)
+
+        calc = QimenCalculation.objects.filter(id=calc_id).first()
+        if not calc:
+            return
+        if text:
+            calc.analysis_text = text
+            calc.analysis_provider = 'deepseek'
+            calc.analysis_model = os.environ.get('DEEPSEEK_MODEL', 'deepseek-reasoner')
+            calc.analysis_time = timezone.now()
+            calc.analysis_status = 'success'
+            calc.analysis_error = ''
+            calc.save(update_fields=[
+                'analysis_text',
+                'analysis_provider',
+                'analysis_model',
+                'analysis_time',
+                'analysis_status',
+                'analysis_error',
+            ])
+        else:
+            calc.analysis_status = 'failed'
+            calc.analysis_error = err or '分析失败'
+            calc.save(update_fields=['analysis_status', 'analysis_error'])
+    finally:
+        close_old_connections()
+
+def _start_analysis_task(calc_id: int, api_key: str = ''):
+    thread = threading.Thread(target=_run_analysis, args=(calc_id, api_key), daemon=True)
+    thread.start()
+
 def calc(request):
     try:
         data = json.loads(request.body or '{}')
@@ -68,6 +141,7 @@ def calc(request):
         solar=solar,
         parsed_datetime=dt,
         seed=seed,
+        analysis_status='pending' if bool(data.get('analyze', False)) else 'none',
     )
     for i, p in enumerate(chart):
         QimenPalace.objects.create(
@@ -81,36 +155,16 @@ def calc(request):
 
     if bool(data.get('analyze', False)):
         api_key = data.get('api_key') or os.environ.get('DEEPSEEK_API_KEY', '')
-        prompt = f"时间：{dt_str}\n地点：{location}\n主题：{topic}\n阳历：{solar}\n\n九宫：\n" + "\n".join(
-            [f"{p['index']}宫 门:{p['gate']} 星:{p['star']} 神:{p['god']} 提示:{p['tip']}" for p in chart]
-        ) + "\n\n请结合主题给出分析与建议。"
-        text, err = call_deepseek(api_key, prompt)
-        if text:
-            calc.analysis_text = text
-            calc.analysis_provider = 'deepseek'
-            calc.analysis_model = os.environ.get('DEEPSEEK_MODEL', 'deepseek-reasoner')
-            calc.analysis_time = timezone.now()
-            calc.save()
-        else:
-            return JsonResponse({'code': 502, 'message': f'分析失败: {err}', 'data': {'id': calc.id}})
+        _start_analysis_task(calc.id, api_key)
 
-    resp = {
-        'input': {
-            'datetime': dt_str,
-            'location': location,
-            'topic': topic,
-            'solar': solar,
-        },
-        'meta': {
-            'parsed_datetime': dt.isoformat() if dt else None,
-            'seed': seed,
-        },
-        'chart': chart,
-        'id': calc.id,
-        'analysis': {'text': calc.analysis_text, 'provider': calc.analysis_provider, 'model': calc.analysis_model} if calc.analysis_text else None,
-    }
-    # print("anslaysis", calc.analysis_text)
+    resp = _serialize_calc(calc)
     return JsonResponse({'code': 200, 'message': 'success', 'data': resp})
+
+def result(request, calc_id):
+    calc = QimenCalculation.objects.filter(id=calc_id).first()
+    if not calc:
+        return JsonResponse({'code': 404, 'message': '记录不存在', 'data': {}}, status=404)
+    return JsonResponse({'code': 200, 'message': 'success', 'data': _serialize_calc(calc)})
 
 def analyze(request):
     try:
@@ -123,19 +177,15 @@ def analyze(request):
         calc = QimenCalculation.objects.filter(id=calc_id).first()
         if not calc:
             return JsonResponse({'code': 404, 'message': '记录不存在', 'data': {}}, status=404)
-        palaces = list(calc.palaces.order_by('index').values('index','gate','star','god','tip'))
-        prompt = f"时间：{calc.datetime_str}\n地点：{calc.location}\n主题：{calc.topic}\n阳历：{calc.solar}\n\n九宫：\n" + "\n".join(
-            [f"{p['index']}宫 门:{p['gate']} 星:{p['star']} 神:{p['god']} 提示:{p['tip']}" for p in palaces]
-        ) + "\n\n请结合主题给出分析与建议。"
-        text, err = call_deepseek(api_key, prompt)
-        if not text:
-            return JsonResponse({'code': 502, 'message': f'分析失败: {err}', 'data': {'id': calc.id}})
-        calc.analysis_text = text
-        calc.analysis_provider = 'deepseek'
-        calc.analysis_model = os.environ.get('DEEPSEEK_MODEL', 'deepseek-reasoner')
-        calc.analysis_time = timezone.now()
-        calc.save()
-        return JsonResponse({'code': 200, 'message': 'success', 'data': {'id': calc.id, 'analysis': {'text': text, 'provider': calc.analysis_provider, 'model': calc.analysis_model}}})
+        if calc.analysis_status in ('pending', 'running'):
+            return JsonResponse({'code': 202, 'message': '分析进行中', 'data': _serialize_calc(calc)})
+        if calc.analysis_text and calc.analysis_status == 'success':
+            return JsonResponse({'code': 200, 'message': 'success', 'data': _serialize_calc(calc)})
+        calc.analysis_status = 'pending'
+        calc.analysis_error = ''
+        calc.save(update_fields=['analysis_status', 'analysis_error'])
+        _start_analysis_task(calc.id, api_key)
+        return JsonResponse({'code': 202, 'message': '分析已开始', 'data': _serialize_calc(calc)})
     else:
         # 无 id，则以入参生成一次并分析
         # 复用 calc 逻辑，带 analyze=true

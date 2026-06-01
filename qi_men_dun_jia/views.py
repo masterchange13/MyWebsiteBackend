@@ -5,3 +5,6 @@ def calc(request):
 
 def analyze(request):
     return qi_service.analyze(request)
+
+def result(request, calc_id):
+    return qi_service.result(request, calc_id)

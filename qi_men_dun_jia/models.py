@@ -12,6 +12,8 @@ class QimenCalculation(models.Model):
     analysis_text = models.TextField(blank=True)
     analysis_provider = models.CharField(max_length=64, blank=True)
     analysis_model = models.CharField(max_length=64, blank=True)
+    analysis_status = models.CharField(max_length=16, default='none')
+    analysis_error = models.TextField(blank=True)
     analysis_time = models.DateTimeField(null=True, blank=True)
     created_time = models.DateTimeField(auto_now_add=True)
 

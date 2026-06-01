@@ -4,3 +4,5 @@ venv/
 .env
 django_venv/
 media/*
+
+django_venv_bak/

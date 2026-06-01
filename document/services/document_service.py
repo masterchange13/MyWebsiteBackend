@@ -33,7 +33,8 @@ def publish(request):
     
 def get_all(request):
     if request.method == 'GET':
-        documents = Document.objects.all()
+        # 按照时间逆序排序
+        documents = Document.objects.all().order_by('-update_time')
 
         data = []
         for doc in documents:
