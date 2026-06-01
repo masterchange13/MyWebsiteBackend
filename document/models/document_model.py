@@ -4,6 +4,7 @@ from users.models.user_model import User
 class Document(models.Model):
     title = models.CharField(max_length=100)
     content = models.TextField()
+    is_public = models.BooleanField(default=True)
     created_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
     author = models.CharField(max_length=100)
