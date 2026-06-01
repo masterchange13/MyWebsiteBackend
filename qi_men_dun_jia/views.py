@@ -8,3 +8,6 @@ def analyze(request):
 
 def result(request, calc_id):
     return qi_service.result(request, calc_id)
+
+def history(request):
+    return qi_service.history(request)

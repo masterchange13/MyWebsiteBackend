@@ -166,6 +166,28 @@ def result(request, calc_id):
         return JsonResponse({'code': 404, 'message': '记录不存在', 'data': {}}, status=404)
     return JsonResponse({'code': 200, 'message': 'success', 'data': _serialize_calc(calc)})
 
+def history(request):
+    session_user = request.session.get('user')
+    qs = QimenCalculation.objects.all()
+    if session_user:
+        user = User.objects.filter(username=session_user).first()
+        qs = qs.filter(user=user) if user else qs.none()
+    else:
+        qs = qs.filter(user__isnull=True)
+
+    records = []
+    for calc in qs.order_by('-created_time')[:30]:
+        records.append({
+            'id': calc.id,
+            'datetime': calc.datetime_str,
+            'location': calc.location,
+            'topic': calc.topic,
+            'solar': calc.solar,
+            'analysis_status': calc.analysis_status,
+            'created_time': calc.created_time.isoformat() if calc.created_time else None,
+        })
+    return JsonResponse({'code': 200, 'message': 'success', 'data': {'records': records}})
+
 def analyze(request):
     try:
         data = json.loads(request.body or '{}')
