@@ -7,3 +7,11 @@ from file.services import file_service
 def upload(request):
     res = file_service.upload(request)
     return res
+
+def list_files(request):
+    res = file_service.list_files(request)
+    return res
+
+def open_file(request, filename):
+    res = file_service.open_file(request, filename)
+    return res
