@@ -38,6 +38,16 @@ def add_icon(request):
     res = navigator_service.add_icon(request)
     return res
 
+@require_POST
+def update_icon(request):
+    res = navigator_service.update_icon(request)
+    return res
+
+@require_POST
+def update_navigator_order(request):
+    res = navigator_service.update_navigator_order(request)
+    return res
+
 @require_http_methods(["DELETE"])
 def remove_icon(request):
     res = navigator_service.remove_icon(request)
