@@ -3,6 +3,6 @@ __pycache__/
 venv/
 .env
 django_venv/
-media/*
+media/
 
 django_venv_bak/
