@@ -2,10 +2,11 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 
 from users.services import user_service
 
-from users.services import navigator_service 
+from users.services import navigator_service
 from users.services import admin_owner_service
 
 # Create your views here.
@@ -13,6 +14,7 @@ from users.services import admin_owner_service
 def index(request):
     return HttpResponse('<h1> welcome to my website')
 
+@csrf_exempt
 @require_POST
 def login(request):
     res = user_service.login(request)
@@ -68,6 +70,7 @@ def logout(request):
     res = user_service.logout(request)
     return res
 
+@csrf_exempt
 @require_POST
 def register(request):
     res = user_service.register(request)
