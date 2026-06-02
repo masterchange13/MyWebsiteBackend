@@ -6,9 +6,9 @@ from users.models.user_model import User
 class Music(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='musics', null=True, blank=True)
     title = models.CharField(max_length=100)
-    album_id = models.CharField(max_length=100)
-    album_title = models.CharField(max_length=100)
+    album_id = models.CharField(max_length=100, blank=True, default='')
+    album_title = models.CharField(max_length=100, blank=True, default='')
     artist = models.CharField(max_length=100)
-    cover = models.ImageField(upload_to='media/music/covers/', default='')
+    cover = models.ImageField(upload_to='media/music/covers/', default='', blank=True)
     audio = models.FileField(upload_to='media/music/audio/')  # ← 真正存 mp3
     url = models.TextField(blank=True)
