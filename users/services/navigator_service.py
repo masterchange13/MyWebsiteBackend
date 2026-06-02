@@ -7,7 +7,7 @@ from django.db import transaction
 from django.db.models import Max
 
 def _get_request_user(request):
-    username = request.session.get('user') or request.GET.get('username') or request.POST.get('username')
+    username = request.session.get('user')
     if not username:
         return None
     try:
@@ -16,9 +16,7 @@ def _get_request_user(request):
         return None
 
 def _qs_for_user(u):
-    if u:
-        return Navigator.objects.filter(user=u)
-    return Navigator.objects.filter(user__isnull=True)
+    return Navigator.objects.filter(user=u)
 
 def _default_favicon(url):
     if not url:
@@ -44,6 +42,8 @@ def _normalize_img(img, url):
 
 def get_all_navigators(request):
     u = _get_request_user(request)
+    if not u:
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': []}, status=401)
     qs = _qs_for_user(u).order_by('display_order', 'id')
     data = list(qs.values('id', 'name', 'img', 'url', 'display_order'))
     return JsonResponse({'code': 200, 'message': 'success', 'data': data})
@@ -51,6 +51,8 @@ def get_all_navigators(request):
 def save_icon(request):
     data = json.loads(request.body or '{}')   # ⭐ 关键
     u = _get_request_user(request)
+    if not u:
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': {}}, status=401)
     img = _normalize_img(data.get('img'), data.get('url'))
     max_order = _qs_for_user(u).aggregate(m=Max('display_order')).get('m')
     next_order = (max_order + 1) if max_order is not None else 0
@@ -73,6 +75,8 @@ def update_icon(request):
         return JsonResponse({'code': 400, 'message': 'id is required', 'data': {}})
 
     u = _get_request_user(request)
+    if not u:
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': {}}, status=401)
     qs = _qs_for_user(u).filter(id=navigator_id)
     nav = qs.first()
     if not nav:
@@ -95,6 +99,8 @@ def update_navigator_order(request):
         return JsonResponse({'code': 400, 'message': 'ordered_ids is required', 'data': {}})
 
     u = _get_request_user(request)
+    if not u:
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': {}}, status=401)
     existing = set(_qs_for_user(u).filter(id__in=ordered_ids).values_list('id', flat=True))
 
     with transaction.atomic():
@@ -114,5 +120,7 @@ def remove_icon(request):
     if not navigator_id:
         return JsonResponse({'code': 400, 'message': 'id is required', 'data': {}})
     u = _get_request_user(request)
+    if not u:
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': {}}, status=401)
     _qs_for_user(u).filter(id=navigator_id).delete()
     return JsonResponse({'code': 200, 'message': 'Icon removed successfully', 'data': {}})

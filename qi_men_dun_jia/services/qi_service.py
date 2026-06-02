@@ -154,7 +154,7 @@ def calc(request):
         )
 
     if bool(data.get('analyze', False)):
-        api_key = data.get('api_key') or os.environ.get('DEEPSEEK_API_KEY', '')
+        api_key = data.get('api_key') or ''
         _start_analysis_task(calc.id, api_key)
 
     resp = _serialize_calc(calc)
@@ -194,7 +194,7 @@ def analyze(request):
     except Exception:
         data = {}
     calc_id = data.get('id')
-    api_key = data.get('api_key') or os.environ.get('DEEPSEEK_API_KEY', '')
+    api_key = data.get('api_key') or ''
     if calc_id:
         calc = QimenCalculation.objects.filter(id=calc_id).first()
         if not calc:

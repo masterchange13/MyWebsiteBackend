@@ -24,7 +24,7 @@ def _resolve_api_key(explicit: str = "") -> str:
         return explicit
     if LOCAL_DEEPSEEK_API_KEY:
         return LOCAL_DEEPSEEK_API_KEY
-    return os.environ.get('DEEPSEEK_API_KEY', '')
+    return ''
 
 
 def call_deepseek(api_key: str, prompt: str):

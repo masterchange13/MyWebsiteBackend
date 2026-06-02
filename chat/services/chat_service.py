@@ -3,12 +3,16 @@ from users.models.user_model import User
 from chat.models.chat_message_model import ChatMessage
 
 def get_users(request):
+    if not request.session.get('user'):
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': []}, status=401)
     data = list(User.objects.values('id', 'username', 'email'))
     return JsonResponse({'code': 200, 'message': 'success', 'data': data})
 
 def get_history(request):
-    username = request.GET.get('from') or request.GET.get('username')
-    peer = request.GET.get('to') or request.GET.get('peer')
+    username = request.session.get('user')
+    if not username:
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': []}, status=401)
+    peer = request.GET.get('peer')
     qs = ChatMessage.objects.all().order_by('-created_time')
     if username:
         user = User.objects.filter(username=username).first()

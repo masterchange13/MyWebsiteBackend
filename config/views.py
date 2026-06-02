@@ -15,7 +15,7 @@ def csrf(request):
     return JsonResponse({'code': 200, 'message': 'CSRF cookie set', 'data': {}})
 
 def _get_request_user(request):
-    username = request.session.get('user') or request.GET.get('username') or request.POST.get('username')
+    username = request.session.get('user')
     if not username:
         return None
     return User.objects.filter(username=username).first()
@@ -32,6 +32,8 @@ def submit_feedback(request):
         return JsonResponse({'code': 400, 'message': 'content is required', 'data': {}})
 
     u = _get_request_user(request)
+    if not u:
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': {}}, status=401)
     fb = Feedback.objects.create(
         user=u,
         title=title,
@@ -43,15 +45,14 @@ def submit_feedback(request):
 @require_http_methods(["GET"])
 def list_feedback(request):
     u = _get_request_user(request)
+    if not u:
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': []}, status=401)
     qs = Feedback.objects.all().order_by('-created_time')
     if request.GET.get('all') == '1':
         if not (u and u.username == 'admin'):
             return JsonResponse({'code': 403, 'message': 'forbidden', 'data': []})
     else:
-        if u:
-            qs = qs.filter(user=u)
-        else:
-            return JsonResponse({'code': 200, 'message': 'success', 'data': []})
+        qs = qs.filter(user=u)
 
     data = list(
         qs.values(

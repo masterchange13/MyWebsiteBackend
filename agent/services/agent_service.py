@@ -17,16 +17,14 @@ DEEPSEEK_MODEL = os.environ.get('DEEPSEEK_MODEL', 'deepseek-reasoner')
 
 
 def _get_request_user(request):
-    username = request.session.get('user') or request.GET.get('username') or request.POST.get('username')
+    username = request.session.get('user')
     if not username:
         return None
     return User.objects.filter(username=username).first()
 
 
 def _qs_for_user(u):
-    if u:
-        return AgentConversation.objects.filter(user=u)
-    return AgentConversation.objects.filter(user__isnull=True)
+    return AgentConversation.objects.filter(user=u)
 
 
 def _sse(event, data):
@@ -91,6 +89,8 @@ def _stream_deepseek(messages, api_key: str):
 
 def list_conversations(request):
     u = _get_request_user(request)
+    if not u:
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': []}, status=401)
     qs = _qs_for_user(u).order_by('-update_time')
     data = list(qs.values('id', 'title', 'created_time', 'update_time'))
     return JsonResponse({'code': 200, 'message': 'success', 'data': data})
@@ -102,6 +102,8 @@ def create_conversation(request):
     except Exception:
         data = {}
     u = _get_request_user(request)
+    if not u:
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': {}}, status=401)
     title = (data.get('title') or '').strip() or '新对话'
     conv = AgentConversation.objects.create(user=u, title=title)
     return JsonResponse({'code': 200, 'message': 'success', 'data': {'id': conv.id, 'title': conv.title}})
@@ -112,6 +114,8 @@ def list_messages(request):
     if not conv_id:
         return JsonResponse({'code': 400, 'message': 'conversation_id is required', 'data': []})
     u = _get_request_user(request)
+    if not u:
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': []}, status=401)
     conv = _qs_for_user(u).filter(id=conv_id).first()
     if not conv:
         return JsonResponse({'code': 404, 'message': 'not found', 'data': []})
@@ -128,9 +132,11 @@ def chat_stream(request):
         data = {}
 
     u = _get_request_user(request)
+    if not u:
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': {}}, status=401)
     conv_id = data.get('conversation_id') or data.get('conversationId')
     user_text = (data.get('message') or data.get('content') or '').strip()
-    api_key = data.get('api_key') or os.environ.get('DEEPSEEK_API_KEY', '')
+    api_key = data.get('api_key') or ''
 
     if not user_text:
         return JsonResponse({'code': 400, 'message': 'message is required', 'data': {}}, status=400)
@@ -186,4 +192,3 @@ def chat_stream(request):
     resp['Cache-Control'] = 'no-cache'
     resp['X-Accel-Buffering'] = 'no'
     return resp
-

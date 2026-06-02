@@ -3,6 +3,7 @@ from users import views
 
 urlpatten = [
         path('login/', views.login),
+        path('logout/', views.logout),
         path('test/', views.test),
         path('getAllNavigators/', views.get_all_navigators),
         path('save_icon/', views.save_icon),

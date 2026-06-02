@@ -7,14 +7,13 @@ from chat.models.chat_message_model import ChatMessage
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        session = self.scope.get('session')
+        self.username = session.get('user') if session else ''
         query = parse_qs(self.scope['query_string'].decode() if self.scope.get('query_string') else '')
-        self.username = (query.get('username') or [''])[0]
         self.peer = (query.get('peer') or [''])[0]
-        if self.username:
-            await sync_to_async(User.objects.get_or_create)(
-                username=self.username,
-                defaults={'password': '', 'email': f'{self.username}@local'}
-            )
+        if not self.username:
+            await self.close(code=4401)
+            return
         # 加入全局群组
         self.room_group_name = 'chat'
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
@@ -35,15 +34,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
             data = {}
         message = data.get('data') or data.get('message') or data.get('content') or ''
         to = data.get('receiveUsername') or data.get('to') or data.get('receiver') or self.peer or ''
-        sender_name = self.username or data.get('sendUsername') or data.get('from') or ''
+        sender_name = self.username or ''
         # 保存消息
         sender = await sync_to_async(lambda: User.objects.filter(username=sender_name).first())() if sender_name else None
-        # 如果对方用户不存在，自动创建占位账号，保证持久化与历史查询一致
-        receiver = None
-        if to:
-            receiver = await sync_to_async(lambda: User.objects.filter(username=to).first())()
-            if receiver is None:
-                receiver = await sync_to_async(lambda: User.objects.create(username=to, password='', email=f'{to}@local'))()
+        receiver = await sync_to_async(lambda: User.objects.filter(username=to).first())() if to else None
+        if to and receiver is None:
+            await self.send(text_data=json.dumps({
+                'sendUsername': 'system',
+                'receiveUsername': sender_name,
+                'data': f'用户不存在：{to}',
+            }))
+            return
         if message:
             await sync_to_async(ChatMessage.objects.create)(sender=sender, receiver=receiver, content=message)
         payload = {

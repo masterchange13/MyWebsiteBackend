@@ -10,7 +10,7 @@ def _base_dir():
 
 
 def _get_username(request):
-    return request.session.get('user') or request.GET.get('username') or request.POST.get('username') or 'public'
+    return request.session.get('user')
 
 
 def _safe_part(s):
@@ -59,6 +59,8 @@ def upload(request):
         return JsonResponse({'code': 400, 'message': 'file is required', 'data': {}})
 
     username = _get_username(request)
+    if not username:
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': {}}, status=401)
     target_dir = _uploads_dir(username)
     target_path = _unique_path(target_dir, f.name)
 
@@ -66,7 +68,7 @@ def upload(request):
         for chunk in f.chunks():
             out.write(chunk)
 
-    url = f'/api/file/open/{target_path.name}?username={_safe_part(username)}'
+    url = f'/api/file/open/{target_path.name}'
     return JsonResponse(
         {
             'code': 200,
@@ -81,6 +83,8 @@ def upload(request):
 
 def list_files(request):
     username = _get_username(request)
+    if not username:
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': []}, status=401)
     target_dir = _uploads_dir(username)
     files = []
     for entry in os.scandir(target_dir):
@@ -92,7 +96,7 @@ def list_files(request):
                 'name': entry.name,
                 'size': stat.st_size,
                 'mtime': int(stat.st_mtime),
-                'url': f'/api/file/open/{entry.name}?username={_safe_part(username)}',
+                'url': f'/api/file/open/{entry.name}',
             }
         )
     files.sort(key=lambda x: x['mtime'], reverse=True)
@@ -101,6 +105,8 @@ def list_files(request):
 
 def open_file(request, filename):
     username = _get_username(request)
+    if not username:
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': {}}, status=401)
     target_dir = _uploads_dir(username)
     safe_name = _safe_part(filename)
     file_path = (target_dir / safe_name).resolve()

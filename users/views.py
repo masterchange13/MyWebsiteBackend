@@ -1,7 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from users.services import user_service
@@ -15,7 +14,6 @@ def index(request):
     return HttpResponse('<h1> welcome to my website')
 
 @require_POST
-@csrf_exempt
 def login(request):
     res = user_service.login(request)
     return res
@@ -63,6 +61,11 @@ def get_user_detail(request, user_id=None):
 
 def assign_admin_owner(request):
     res = admin_owner_service.assign_admin_owner(request)
+    return res
+
+@require_POST
+def logout(request):
+    res = user_service.logout(request)
     return res
 
 @require_POST
