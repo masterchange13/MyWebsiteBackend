@@ -47,23 +47,19 @@ def list_feedback(request):
     u = _get_request_user(request)
     if not u:
         return JsonResponse({'code': 401, 'message': '未登录', 'data': []}, status=401)
-    qs = Feedback.objects.all().order_by('-created_time')
-    if request.GET.get('all') == '1':
-        if not (u and u.username == 'admin'):
-            return JsonResponse({'code': 403, 'message': 'forbidden', 'data': []})
-    else:
-        qs = qs.filter(user=u)
+    qs = Feedback.objects.select_related('user').all().order_by('-created_time')
 
-    data = list(
-        qs.values(
-            'id',
-            'title',
-            'content',
-            'contact',
-            'status',
-            'reply',
-            'created_time',
-            'update_time',
-        )
-    )
+    data = []
+    for fb in qs[:200]:
+        data.append({
+            'id': fb.id,
+            'title': fb.title,
+            'content': fb.content,
+            'contact': fb.contact,
+            'status': fb.status,
+            'reply': fb.reply,
+            'username': fb.user.username if fb.user else None,
+            'created_time': fb.created_time,
+            'update_time': fb.update_time,
+        })
     return JsonResponse({'code': 200, 'message': 'success', 'data': data})
