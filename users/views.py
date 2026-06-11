@@ -75,3 +75,10 @@ def logout(request):
 def register(request):
     res = user_service.register(request)
     return res
+
+
+@csrf_exempt
+@require_POST
+def update_user(request):
+    res = user_service.update_user(request)
+    return res

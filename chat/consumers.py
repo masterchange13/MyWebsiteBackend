@@ -11,19 +11,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.username = session.get('user') if session else ''
         query = parse_qs(self.scope['query_string'].decode() if self.scope.get('query_string') else '')
         self.peer = (query.get('peer') or [''])[0]
+        # 如果 session 中没有用户名，尝试从查询参数获取
+        if not self.username:
+            self.username = (query.get('username') or [''])[0]
         if not self.username:
             await self.close(code=4401)
             return
-        # 加入全局群组
-        self.room_group_name = 'chat'
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
-        # 加入个人组
-        if self.username:
-            await self.channel_layer.group_add(f'user_{self.username}', self.channel_name)
+        # 加入个人组（用于定向消息路由）
+        await self.channel_layer.group_add(f'user_{self.username}', self.channel_name)
         await self.accept()
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         if self.username:
             await self.channel_layer.group_discard(f'user_{self.username}', self.channel_name)
 
@@ -53,13 +51,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'receiveUsername': to or None,
             'data': message,
         }
-        # 路由消息
+        # 路由消息：只发送给对话双方，不再全局广播
         if to:
             await self.channel_layer.group_send(f'user_{to}', payload)
-            if sender_name:
+            if sender_name and sender_name != to:
                 await self.channel_layer.group_send(f'user_{sender_name}', payload)
-        else:
-            await self.channel_layer.group_send(self.room_group_name, payload)
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({

@@ -19,8 +19,10 @@ urlpatten = [
     path('update', views.update_music),
     path('remove', views.remove_music),
     path('get_all', views.get_all_music),
+    path('getAllMusic', views.get_all_music),
     path('update_music_status', views.update_music_status),
     path('upload', views.upload_music),
+    path('search', views.search_music),
 ]
 
 media_url = [

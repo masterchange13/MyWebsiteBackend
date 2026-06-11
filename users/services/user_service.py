@@ -93,6 +93,36 @@ def register(request):
     u = User.objects.create(username=username, password=make_password(password), email=email)
     return JsonResponse({'code': 200, 'message': '注册成功', 'data': {'id': u.id, 'username': u.username, 'email': u.email}})
 
+def update_user(request):
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+
+    username = request.session.get('user')
+    if not username:
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': {}}, status=401)
+
+    u = User.objects.filter(username=username).first()
+    if not u:
+        request.session.flush()
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': {}}, status=401)
+
+    data = json.loads(request.body or '{}')
+    email = data.get('email')
+    password = data.get('password')
+
+    if email:
+        u.email = email
+    if password:
+        u.password = make_password(password)
+
+    u.save()
+    return JsonResponse({'code': 200, 'message': '更新成功', 'data': {
+        'id': u.id,
+        'username': u.username,
+        'email': u.email,
+    }})
+
+
 def logout(request):
     request.session.flush()
     return JsonResponse({'code': 200, 'message': 'success', 'data': {}})

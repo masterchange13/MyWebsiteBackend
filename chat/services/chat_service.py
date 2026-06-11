@@ -12,17 +12,31 @@ def get_history(request):
     username = request.session.get('user')
     if not username:
         return JsonResponse({'code': 401, 'message': '未登录', 'data': []}, status=401)
+
+    # 前端传参：{ from: 当前用户名, to: 对方用户名 }
+    from_user = request.GET.get('from')
+    to_user = request.GET.get('to')
     peer = request.GET.get('peer')
-    qs = ChatMessage.objects.all().order_by('-created_time')
-    if username:
-        user = User.objects.filter(username=username).first()
-        if user:
-            qs = qs.filter(sender=user) | qs.filter(receiver=user)
-    if peer and username:
-        user = User.objects.filter(username=username).first()
-        puser = User.objects.filter(username=peer).first()
-        if user and puser:
-            qs = ChatMessage.objects.filter(sender=user, receiver=puser) | ChatMessage.objects.filter(sender=puser, receiver=user)
+
+    # 确定双方用户名：优先用 from/to，其次用 username + peer
+    user_a = from_user or username
+    user_b = to_user or peer
+
+    if not user_a or not user_b:
+        return JsonResponse({'code': 400, 'message': '参数缺失', 'data': []}, status=400)
+
+    from_user_obj = User.objects.filter(username=user_a).first()
+    to_user_obj = User.objects.filter(username=user_b).first()
+
+    if not from_user_obj or not to_user_obj:
+        return JsonResponse({'code': 404, 'message': '用户不存在', 'data': []}, status=404)
+
+    # 只查这两人之间的消息
+    qs = (
+        ChatMessage.objects.filter(sender=from_user_obj, receiver=to_user_obj)
+        | ChatMessage.objects.filter(sender=to_user_obj, receiver=from_user_obj)
+    ).order_by('created_time')
+
     data = [
         {
             'sendUsername': m.sender.username if m.sender else None,

@@ -58,3 +58,8 @@ def get_audio(request, filename):
 def get_cover(request, filename):
     data = music_service.get_cover(request, filename)
     return data
+
+
+def search_music(request):
+    data = music_service.search_music(request)
+    return data
