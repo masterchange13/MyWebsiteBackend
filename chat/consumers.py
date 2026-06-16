@@ -2,6 +2,7 @@ import json
 from urllib.parse import parse_qs
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
+from django.utils import timezone
 from users.models.user_model import User
 from chat.models.chat_message_model import ChatMessage
 
@@ -44,22 +45,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
             }))
             return
         if message:
-            await sync_to_async(ChatMessage.objects.create)(sender=sender, receiver=receiver, content=message)
+            msg_obj = await sync_to_async(ChatMessage.objects.create)(sender=sender, receiver=receiver, content=message)
+            created_time = msg_obj.created_time.isoformat() if msg_obj else timezone.now().isoformat()
+        else:
+            created_time = timezone.now().isoformat()
         payload = {
             'type': 'chat.message',
             'sendUsername': sender_name,
             'receiveUsername': to or None,
             'data': message,
+            'created_time': created_time,
         }
         # 路由消息：只发送给对话双方，不再全局广播
         if to:
             await self.channel_layer.group_send(f'user_{to}', payload)
-            if sender_name and sender_name != to:
-                await self.channel_layer.group_send(f'user_{sender_name}', payload)
+        # 始终给发送者回显，确保发送方一定能看到自己发的消息
+        if sender_name:
+            await self.channel_layer.group_send(f'user_{sender_name}', payload)
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({
             'sendUsername': event.get('sendUsername'),
             'receiveUsername': event.get('receiveUsername'),
             'data': event.get('data'),
+            'created_time': event.get('created_time'),
         }))
