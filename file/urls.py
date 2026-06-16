@@ -5,4 +5,5 @@ urlpatten = [
         path('upload/', views.upload),
         path('list/', views.list_files),
         path('open/<str:filename>', views.open_file),
+        path('download/<str:filename>', views.download_file),
 ]

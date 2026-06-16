@@ -15,3 +15,7 @@ def list_files(request):
 def open_file(request, filename):
     res = file_service.open_file(request, filename)
     return res
+
+def download_file(request, filename):
+    res = file_service.download_file(request, filename)
+    return res
