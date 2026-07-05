@@ -18,12 +18,15 @@ def _get_redis():
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        session = self.scope.get('session')
-        self.username = session.get('user') if session else ''
         query = parse_qs(self.scope['query_string'].decode() if self.scope.get('query_string') else '')
         self.peer = (query.get('peer') or [''])[0]
+        # 优先使用前端显式传递的 username 参数
+        # 不要优先从 session 读取，因为同一浏览器的 session cookie 是共享的，
+        # 多标签页登录不同账户时 session 会被最后一个登录的用户覆盖
+        self.username = (query.get('username') or [''])[0]
         if not self.username:
-            self.username = (query.get('username') or [''])[0]
+            session = self.scope.get('session')
+            self.username = session.get('user') if session else ''
         if not self.username:
             await self.close(code=4401)
             return
