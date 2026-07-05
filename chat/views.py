@@ -5,3 +5,6 @@ def get_users(request):
 
 def get_history(request):
     return chat_service.get_history(request)
+
+def online_users(request):
+    return chat_service.get_online_users(request)
