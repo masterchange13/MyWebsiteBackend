@@ -10,6 +10,8 @@ urlpatten = [
         path('add_icon/', views.add_icon),
         path('update_icon/', views.update_icon),
         path('update_navigator_order/', views.update_navigator_order),
+        path('insert_navigator_order/', views.insert_navigator_order),
+        path('swap_navigator_order/', views.swap_navigator_order),
         path('remove_icon/', views.remove_icon),
         path('me/', views.get_me),
         path('detail/<int:user_id>/', views.get_user_detail),
