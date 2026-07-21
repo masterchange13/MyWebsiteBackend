@@ -31,6 +31,8 @@ from file import urls as file_urls
 urlpatterns = [
     # urls.py
     path("csrf/", config_views.csrf),
+    path("site-settings/", config_views.get_website_settings),
+    path("site-settings/save/", config_views.save_website_settings),
     path("feedback/submit/", config_views.submit_feedback),
     path("feedback/list/", config_views.list_feedback),
     path('test/', login_views.index, name='index'),

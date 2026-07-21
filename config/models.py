@@ -19,3 +19,16 @@ class Feedback(models.Model):
     reply = models.TextField(blank=True, default='')
     created_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
+
+
+class WebsiteSetting(models.Model):
+    key = models.CharField(max_length=50, unique=True, default='default')
+    site_title = models.CharField(max_length=120, default='Raspberrypi Console')
+    login_title = models.CharField(max_length=120, default='欢迎回来')
+    login_slogan = models.CharField(max_length=255, default='快速进入你的个人聚合空间')
+    theme = models.CharField(max_length=50, default='cyber')
+    show_petals = models.BooleanField(default=True)
+    top_level_order = models.JSONField(default=list)
+    submenu_orders = models.JSONField(default=dict)
+    created_time = models.DateTimeField(auto_now_add=True)
+    update_time = models.DateTimeField(auto_now=True)
