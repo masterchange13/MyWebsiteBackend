@@ -20,6 +20,10 @@ DEFAULT_WEBSITE_SETTINGS = {
     'login_title': '欢迎回来',
     'login_slogan': '快速进入你的个人聚合空间',
     'theme': 'cyber',
+    'density': 'balanced',
+    'surface_style': 'glass',
+    'corner_style': 'soft',
+    'font_scale': 'normal',
     'show_petals': True,
     'top_level_order': DEFAULT_TOP_LEVEL_ORDER,
     'submenu_orders': DEFAULT_SUBMENU_ORDERS,
@@ -54,6 +58,10 @@ def _normalize_settings_payload(data):
     payload['login_title'] = str(data.get('login_title') or DEFAULT_WEBSITE_SETTINGS['login_title']).strip()[:120] or DEFAULT_WEBSITE_SETTINGS['login_title']
     payload['login_slogan'] = str(data.get('login_slogan') or DEFAULT_WEBSITE_SETTINGS['login_slogan']).strip()[:255] or DEFAULT_WEBSITE_SETTINGS['login_slogan']
     payload['theme'] = str(data.get('theme') or DEFAULT_WEBSITE_SETTINGS['theme']).strip()[:50] or DEFAULT_WEBSITE_SETTINGS['theme']
+    payload['density'] = str(data.get('density') or DEFAULT_WEBSITE_SETTINGS['density']).strip()[:50] or DEFAULT_WEBSITE_SETTINGS['density']
+    payload['surface_style'] = str(data.get('surface_style') or DEFAULT_WEBSITE_SETTINGS['surface_style']).strip()[:50] or DEFAULT_WEBSITE_SETTINGS['surface_style']
+    payload['corner_style'] = str(data.get('corner_style') or DEFAULT_WEBSITE_SETTINGS['corner_style']).strip()[:50] or DEFAULT_WEBSITE_SETTINGS['corner_style']
+    payload['font_scale'] = str(data.get('font_scale') or DEFAULT_WEBSITE_SETTINGS['font_scale']).strip()[:50] or DEFAULT_WEBSITE_SETTINGS['font_scale']
     payload['show_petals'] = bool(data.get('show_petals', DEFAULT_WEBSITE_SETTINGS['show_petals']))
     payload['top_level_order'] = _normalize_order(data.get('top_level_order'), DEFAULT_TOP_LEVEL_ORDER)
     submenu_orders = data.get('submenu_orders') if isinstance(data.get('submenu_orders'), dict) else {}
@@ -72,6 +80,10 @@ def _serialize_website_settings(setting=None):
         'login_title': setting.login_title,
         'login_slogan': setting.login_slogan,
         'theme': setting.theme,
+        'density': setting.density,
+        'surface_style': setting.surface_style,
+        'corner_style': setting.corner_style,
+        'font_scale': setting.font_scale,
         'show_petals': setting.show_petals,
         'top_level_order': setting.top_level_order or list(DEFAULT_TOP_LEVEL_ORDER),
         'submenu_orders': setting.submenu_orders or dict(DEFAULT_SUBMENU_ORDERS),
@@ -96,6 +108,10 @@ def save_website_settings(request):
     setting.login_title = payload['login_title']
     setting.login_slogan = payload['login_slogan']
     setting.theme = payload['theme']
+    setting.density = payload['density']
+    setting.surface_style = payload['surface_style']
+    setting.corner_style = payload['corner_style']
+    setting.font_scale = payload['font_scale']
     setting.show_petals = payload['show_petals']
     setting.top_level_order = payload['top_level_order']
     setting.submenu_orders = payload['submenu_orders']
@@ -104,6 +120,10 @@ def save_website_settings(request):
         'login_title',
         'login_slogan',
         'theme',
+        'density',
+        'surface_style',
+        'corner_style',
+        'font_scale',
         'show_petals',
         'top_level_order',
         'submenu_orders',
