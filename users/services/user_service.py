@@ -1,7 +1,50 @@
 import json
+
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.http import JsonResponse, HttpResponse
+
+from chat.services import presence_service
 from users.models.user_model import User
 from django.contrib.auth.hashers import check_password, make_password
+
+ONLINE_BROADCAST_GROUP = "chat:online_broadcast"
+
+
+def _broadcast_online_status(username: str, online: bool):
+    if not username:
+        return
+    try:
+        channel_layer = get_channel_layer()
+        if channel_layer is None:
+            return
+        async_to_sync(channel_layer.group_send)(
+            ONLINE_BROADCAST_GROUP,
+            {
+                'type': 'online.status',
+                'username': username,
+                'online': online,
+            }
+        )
+    except Exception:
+        pass
+
+
+def _broadcast_online_snapshot():
+    try:
+        channel_layer = get_channel_layer()
+        if channel_layer is None:
+            return
+        users = sorted(presence_service.get_online_usernames())
+        async_to_sync(channel_layer.group_send)(
+            ONLINE_BROADCAST_GROUP,
+            {
+                'type': 'online.snapshot',
+                'users': users,
+            }
+        )
+    except Exception:
+        pass
 
 def test(request):
     return HttpResponse('<h1> hello test')
@@ -35,6 +78,9 @@ def login(request):
 
     if ok:
         request.session['user'] = username
+        presence_service.mark_login(username)
+        _broadcast_online_status(username, True)
+        _broadcast_online_snapshot()
         return JsonResponse({'code': 200, 'message': 'success', 'data': {}})
 
     return JsonResponse({'code': 400, 'message': '用户名或密码错误', 'data': {}}, status=400)
@@ -124,5 +170,9 @@ def update_user(request):
 
 
 def logout(request):
+    username = request.session.get('user')
     request.session.flush()
+    presence_service.mark_logout(username)
+    _broadcast_online_status(username, False)
+    _broadcast_online_snapshot()
     return JsonResponse({'code': 200, 'message': 'success', 'data': {}})

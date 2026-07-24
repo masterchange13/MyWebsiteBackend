@@ -1,13 +1,20 @@
 from django.http import JsonResponse
-from django.core.cache import cache
+
 from users.models.user_model import User
 from chat.models.chat_message_model import ChatMessage
+from chat.services import presence_service
 
-ONLINE_USERS_KEY = "chat:online_users"
 
-
-def get_redis():
-    return cache.client.get_client()
+def _serialize_users(online_usernames: set[str]):
+    data = []
+    for user in User.objects.values('id', 'username', 'email'):
+        data.append({
+            'id': user['id'],
+            'username': user['username'],
+            'email': user['email'],
+            'online': user['username'] in online_usernames,
+        })
+    return data
 
 
 def get_online_users(request):
@@ -15,41 +22,17 @@ def get_online_users(request):
     username = request.session.get('user')
     if not username:
         return JsonResponse({'code': 401, 'message': '未登录', 'data': []}, status=401)
-    try:
-        online_set = get_redis().smembers(ONLINE_USERS_KEY)
-        online_usernames = {u.decode('utf-8') if isinstance(u, bytes) else u for u in online_set}
-    except Exception:
-        online_usernames = set()
-    # 返回所有用户及其在线状态
-    users = User.objects.values('id', 'username', 'email')
-    data = []
-    for u in users:
-        data.append({
-            'id': u['id'],
-            'username': u['username'],
-            'email': u['email'],
-            'online': u['username'] in online_usernames,
-        })
-    return JsonResponse({'code': 200, 'message': 'success', 'data': data})
+    presence_service.touch_user(username)
+    online_usernames = presence_service.get_online_usernames()
+    return JsonResponse({'code': 200, 'message': 'success', 'data': _serialize_users(online_usernames)})
 
 def get_users(request):
-    if not request.session.get('user'):
+    username = request.session.get('user')
+    if not username:
         return JsonResponse({'code': 401, 'message': '未登录', 'data': []}, status=401)
-    try:
-        online_set = get_redis().smembers(ONLINE_USERS_KEY)
-        online_usernames = {u.decode('utf-8') if isinstance(u, bytes) else u for u in online_set}
-    except Exception:
-        online_usernames = set()
-    users = User.objects.values('id', 'username', 'email')
-    data = []
-    for u in users:
-        data.append({
-            'id': u['id'],
-            'username': u['username'],
-            'email': u['email'],
-            'online': u['username'] in online_usernames,
-        })
-    return JsonResponse({'code': 200, 'message': 'success', 'data': data})
+    presence_service.touch_user(username)
+    online_usernames = presence_service.get_online_usernames()
+    return JsonResponse({'code': 200, 'message': 'success', 'data': _serialize_users(online_usernames)})
 
 def get_history(request):
     username = request.session.get('user')

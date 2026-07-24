@@ -1,19 +1,15 @@
 import json
 from urllib.parse import parse_qs
+
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from django.utils import timezone
-from django.core.cache import cache
+
 from users.models.user_model import User
 from chat.models.chat_message_model import ChatMessage
+from chat.services import presence_service
 
-ONLINE_USERS_KEY = "chat:online_users"  # Redis Set
 ONLINE_BROADCAST_GROUP = "chat:online_broadcast"
-
-
-def _get_redis():
-    """获取原始 Redis 客户端，用于 Set 操作"""
-    return cache.client.get_client()
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -30,19 +26,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if not self.username:
             await self.close(code=4401)
             return
+        self.connection_id = self.channel_name
 
         # 加入个人组（用于定向消息路由）
         await self.channel_layer.group_add(f'user_{self.username}', self.channel_name)
         # 加入在线广播组（用于接收在线状态变更通知）
         await self.channel_layer.group_add(ONLINE_BROADCAST_GROUP, self.channel_name)
 
-        # Redis SADD: 标记用户上线
-        await sync_to_async(_get_redis().sadd)(ONLINE_USERS_KEY, self.username)
-
-        # 广播上线通知给所有在线用户
-        await self._broadcast_online_status(self.username, True)
+        # 标记该连接在线，并刷新用户 presence TTL
+        await sync_to_async(presence_service.mark_connection_online)(self.username, self.connection_id)
 
         await self.accept()
+
+        # 连接建立后再广播，避免新旧客户端在握手阶段错过事件
+        await self._broadcast_online_status(self.username, True)
+        await self._broadcast_online_snapshot()
 
     async def disconnect(self, close_code):
         if self.username:
@@ -51,17 +49,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
             # 从广播组移除
             await self.channel_layer.group_discard(ONLINE_BROADCAST_GROUP, self.channel_name)
 
-            # Redis SREM: 标记用户下线
-            await sync_to_async(_get_redis().srem)(ONLINE_USERS_KEY, self.username)
+            # 标记当前连接下线；若用户仍有其他连接，则保持在线
+            still_online = await sync_to_async(presence_service.mark_connection_offline)(
+                self.username,
+                getattr(self, 'connection_id', ''),
+            )
 
-            # 广播下线通知
-            await self._broadcast_online_status(self.username, False)
+            # 仅在最后一个连接断开时广播下线
+            if not still_online:
+                await self._broadcast_online_status(self.username, False)
+                await self._broadcast_online_snapshot()
 
     async def receive(self, text_data):
         try:
             data = json.loads(text_data or '{}')
         except Exception:
             data = {}
+        if data.get('type') in {'heartbeat', 'ping'}:
+            await sync_to_async(presence_service.refresh_connection)(
+                self.username,
+                getattr(self, 'connection_id', ''),
+            )
+            await self.send(text_data=json.dumps({
+                'type': 'pong',
+            }))
+            return
         message = data.get('data') or data.get('message') or data.get('content') or ''
         to = data.get('receiveUsername') or data.get('to') or data.get('receiver') or self.peer or ''
         sender_name = self.username or ''
@@ -111,6 +123,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'online': event.get('online'),
         }))
 
+    async def online_snapshot(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'online_snapshot',
+            'users': event.get('users', []),
+        }))
+
     async def _broadcast_online_status(self, username: str, online: bool):
         """向所有在线用户广播某用户的上线/下线状态"""
         await self.channel_layer.group_send(
@@ -119,5 +137,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'type': 'online.status',
                 'username': username,
                 'online': online,
+            }
+        )
+
+    async def _broadcast_online_snapshot(self):
+        users = await sync_to_async(presence_service.get_online_usernames)()
+        await self.channel_layer.group_send(
+            ONLINE_BROADCAST_GROUP,
+            {
+                'type': 'online.snapshot',
+                'users': sorted(users),
             }
         )
