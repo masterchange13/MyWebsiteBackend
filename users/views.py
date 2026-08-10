@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from users.services import user_service
 
 from users.services import navigator_service
+from users.services import app_launcher_service
 from users.services import admin_owner_service
 
 # Create your views here.
@@ -99,6 +100,56 @@ def logout(request):
 @require_POST
 def register(request):
     res = user_service.register(request)
+    return res
+
+
+# --- App Launcher ---
+
+
+def get_all_app_launchers(request):
+    res = app_launcher_service.get_all_app_launchers(request)
+    return res
+
+
+@csrf_exempt
+@require_POST
+def save_app_launcher(request):
+    res = app_launcher_service.save_app_launcher(request)
+    return res
+
+
+@csrf_exempt
+@require_POST
+def update_app_launcher(request):
+    res = app_launcher_service.update_app_launcher(request)
+    return res
+
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def remove_app_launcher(request):
+    res = app_launcher_service.remove_app_launcher(request)
+    return res
+
+
+@csrf_exempt
+@require_POST
+def insert_app_launcher_order(request):
+    res = app_launcher_service.insert_app_launcher_order(request)
+    return res
+
+
+@csrf_exempt
+@require_POST
+def swap_app_launcher_order(request):
+    res = app_launcher_service.swap_app_launcher_order(request)
+    return res
+
+
+@csrf_exempt
+@require_POST
+def launch_app(request):
+    res = app_launcher_service.launch_app(request)
     return res
 
 

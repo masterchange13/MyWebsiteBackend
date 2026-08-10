@@ -20,4 +20,12 @@ urlpatten = [
         path('register/', views.register),
         path('update/', views.update_user),
         path('assignAdminOwner/', views.assign_admin_owner),
+        # App Launcher
+        path('getAllAppLaunchers/', views.get_all_app_launchers),
+        path('save_app_launcher/', views.save_app_launcher),
+        path('update_app_launcher/', views.update_app_launcher),
+        path('remove_app_launcher/', views.remove_app_launcher),
+        path('insert_app_launcher_order/', views.insert_app_launcher_order),
+        path('swap_app_launcher_order/', views.swap_app_launcher_order),
+        path('launch_app/', views.launch_app),
 ]

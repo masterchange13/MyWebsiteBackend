@@ -26,6 +26,7 @@ from agent import urls as agent_urls
 from chat import urls as chat_urls
 from chat import routing as ws_urls
 from qi_men_dun_jia import urls as qmdj_urls
+from decisionHelper import urls as decision_urls
 from file import urls as file_urls
 
 urlpatterns = [
@@ -51,4 +52,6 @@ urlpatterns = [
     path('qimen/', include(qmdj_urls.urlpatten)),
     # file
     path('file/', include(file_urls.urlpatten)),
+    # decision
+    path('decision/', include(decision_urls.urlpatterns)),
 ]
