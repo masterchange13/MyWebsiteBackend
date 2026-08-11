@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'agent',
     'qi_men_dun_jia',
     'decisionHelper',
+    'emailer',
 ]
 
 MIDDLEWARE = [

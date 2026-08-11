@@ -27,6 +27,7 @@ from chat import urls as chat_urls
 from chat import routing as ws_urls
 from qi_men_dun_jia import urls as qmdj_urls
 from decisionHelper import urls as decision_urls
+from emailer import urls as emailer_urls
 from file import urls as file_urls
 
 urlpatterns = [
@@ -54,4 +55,6 @@ urlpatterns = [
     path('file/', include(file_urls.urlpatten)),
     # decision
     path('decision/', include(decision_urls.urlpatterns)),
+    # email
+    path('email/', include(emailer_urls.urlpatterns)),
 ]
