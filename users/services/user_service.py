@@ -8,7 +8,7 @@ from chat.services import presence_service
 from users.models.user_model import User
 from django.contrib.auth.hashers import check_password, make_password
 
-ONLINE_BROADCAST_GROUP = "chat:online_broadcast"
+ONLINE_BROADCAST_GROUP = "chat_online_broadcast"
 
 
 def _broadcast_online_status(username: str, online: bool):

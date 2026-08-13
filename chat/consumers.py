@@ -1,4 +1,5 @@
 import json
+import re
 from urllib.parse import parse_qs
 
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -9,7 +10,13 @@ from users.models.user_model import User
 from chat.models.chat_message_model import ChatMessage
 from chat.services import presence_service
 
-ONLINE_BROADCAST_GROUP = "chat:online_broadcast"
+ONLINE_BROADCAST_GROUP = "chat_online_broadcast"
+
+
+def _safe_group_name(name):
+    """组名只允许 ASCII 字母数字、连字符、下划线、句点，长度 < 100"""
+    cleaned = re.sub(r'[^a-zA-Z0-9\-_.]', '_', str(name))[:99]
+    return cleaned or '_'
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -27,9 +34,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close(code=4401)
             return
         self.connection_id = self.channel_name
+        self.user_group = f'user_{_safe_group_name(self.username)}'
 
         # 加入个人组（用于定向消息路由）
-        await self.channel_layer.group_add(f'user_{self.username}', self.channel_name)
+        await self.channel_layer.group_add(self.user_group, self.channel_name)
         # 加入在线广播组（用于接收在线状态变更通知）
         await self.channel_layer.group_add(ONLINE_BROADCAST_GROUP, self.channel_name)
 
@@ -45,7 +53,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         if self.username:
             # 从个人组移除
-            await self.channel_layer.group_discard(f'user_{self.username}', self.channel_name)
+            await self.channel_layer.group_discard(self.user_group, self.channel_name)
             # 从广播组移除
             await self.channel_layer.group_discard(ONLINE_BROADCAST_GROUP, self.channel_name)
 
@@ -103,9 +111,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         }
         # 路由消息：只发送给对话双方
         if to:
-            await self.channel_layer.group_send(f'user_{to}', payload)
+            await self.channel_layer.group_send(f'user_{_safe_group_name(to)}', payload)
         if sender_name:
-            await self.channel_layer.group_send(f'user_{sender_name}', payload)
+            await self.channel_layer.group_send(f'user_{_safe_group_name(sender_name)}', payload)
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({
