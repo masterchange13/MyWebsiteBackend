@@ -10,7 +10,7 @@ import json
 from config.models import Feedback, WebsiteSetting
 from users.models.user_model import User
 
-DEFAULT_TOP_LEVEL_ORDER = ['media', 'tools', 'chat', 'navigator', 'blog', 'guide', 'feedback', 'author', 'siteSettings']
+DEFAULT_TOP_LEVEL_ORDER = ['media', 'tools', 'chat', 'navigator', 'blog', 'guide', 'feedback', 'author', 'siteSettings', 'systemMonitor']
 DEFAULT_SUBMENU_ORDERS = {
     'media': ['video', 'document', 'music', 'transfer', 'todoList'],
     'tools': ['agent', 'qiMen', 'timer', 'calculator', 'timetable'],
@@ -173,4 +173,14 @@ def list_feedback(request):
             'created_time': fb.created_time,
             'update_time': fb.update_time,
         })
+    return JsonResponse({'code': 200, 'message': 'success', 'data': data})
+
+@require_http_methods(["GET"])
+def system_status(request):
+    if not _get_request_user(request):
+        return JsonResponse({'code': 401, 'message': '未登录', 'data': {}}, status=401)
+    from config.system_status import get_system_status
+    data = get_system_status()
+    if data is None:
+        return JsonResponse({'code': 500, 'message': 'psutil 未安装', 'data': {}}, status=500)
     return JsonResponse({'code': 200, 'message': 'success', 'data': data})
