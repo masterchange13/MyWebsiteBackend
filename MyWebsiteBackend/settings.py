@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'qi_men_dun_jia',
     'decisionHelper',
     'emailer',
+    'timetable',
 ]
 
 MIDDLEWARE = [

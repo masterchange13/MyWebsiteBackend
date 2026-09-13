@@ -13,7 +13,7 @@ from users.models.user_model import User
 DEFAULT_TOP_LEVEL_ORDER = ['media', 'tools', 'chat', 'navigator', 'blog', 'guide', 'feedback', 'author', 'siteSettings']
 DEFAULT_SUBMENU_ORDERS = {
     'media': ['video', 'document', 'music', 'transfer', 'todoList'],
-    'tools': ['agent', 'qiMen', 'timer', 'calculator'],
+    'tools': ['agent', 'qiMen', 'timer', 'calculator', 'timetable'],
 }
 DEFAULT_WEBSITE_SETTINGS = {
     'site_title': 'Raspberrypi Console',

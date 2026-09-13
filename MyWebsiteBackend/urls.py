@@ -29,6 +29,7 @@ from qi_men_dun_jia import urls as qmdj_urls
 from decisionHelper import urls as decision_urls
 from emailer import urls as emailer_urls
 from file import urls as file_urls
+from timetable import urls as timetable_urls
 
 urlpatterns = [
     # urls.py
@@ -42,6 +43,7 @@ urlpatterns = [
     path('users/', include(users_urls.urlpatten)),
     path('document/', include(document_urls.urlpatten)),
     path('todo/', include(to_do_list_urls.urlpatten)),
+    path('timetable/', include(timetable_urls.urlpatten)),
     # music/
     path('music/', include(music_urls.urlpatten)),
     path('media/music/', include(music_urls.media_url)),
