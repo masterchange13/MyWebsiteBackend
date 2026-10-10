@@ -26,6 +26,8 @@ services:
     environment:
       DJANGO_SECRET_KEY: "docker-dev-secret"
       DJANGO_DEBUG: "1"
+      SYSTEM_MONITOR_PLATFORM: "${SYSTEM_MONITOR_PLATFORM:-auto}"
+      SYSTEM_MONITOR_DISK_PATH: "${SYSTEM_MONITOR_DISK_PATH:-/}"
       DB_NAME: my_website
       DB_USER: user
       DB_PASSWORD: "123456"

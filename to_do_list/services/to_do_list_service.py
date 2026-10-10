@@ -21,6 +21,15 @@ def _get_request_user(request):
     except User.DoesNotExist:
         return None
 
+def _serialize_todo(todo):
+    return {
+        'id': todo.id,
+        'title': todo.title,
+        'completed': todo.completed,
+        'created_time': todo.created_time,
+        'updated_time': todo.updated_time,
+    }
+
 def get_to_do_list(request):
     u = _get_request_user(request)
     qs = ToDoList.objects.all()
@@ -45,6 +54,9 @@ def add_to_do_list(request):
         data = json.loads(request.body or '{}')
 
         title = data.get('title')
+        if not isinstance(title, str) or not title.strip():
+            return JsonResponse({'code': 400, 'message': '待办内容不能为空', 'data': {}}, status=400)
+        title = title.strip()
         completed = data.get('completed', False)  # 给默认值更安全
 
         # ✅ 保存到数据库
@@ -58,11 +70,7 @@ def add_to_do_list(request):
         return JsonResponse({
             'code': 200,
             'message': 'To do list added successfully',
-            'data': {
-                # 'id': to_do_list.id,
-                'title': to_do_list.title,
-                'completed': to_do_list.completed
-            }
+            'data': _serialize_todo(to_do_list)
         })
 
     return JsonResponse({'code': 400, 'message': 'Invalid request method', 'data': {}})
@@ -118,27 +126,29 @@ def update_to_do_status(request):
     return JsonResponse({'code': 200, 'message': 'To do list updated successfully', 'data': {'id': obj.id,}})
 
 def done_edit(request):
+    if request.method != 'POST':
+        return JsonResponse({'code': 405, 'message': 'Invalid request method', 'data': {}}, status=405)
     data = json.loads(request.body or '{}')
 
     id = data.get('id')
     title = data.get('title')
+    if not id:
+        return JsonResponse({'code': 400, 'message': 'id is required', 'data': {}}, status=400)
+    if not isinstance(title, str) or not title.strip():
+        return JsonResponse({'code': 400, 'message': '待办内容不能为空', 'data': {}}, status=400)
 
     u = _get_request_user(request)
     if u:
         obj = get_object_or_404(ToDoList, id=id, user=u)
     else:
         obj = get_object_or_404(ToDoList, id=id)
-    obj.title = title
-    obj.save()
+    obj.title = title.strip()
+    obj.save(update_fields=['title', 'updated_time'])
 
     return JsonResponse({
         'code': 200,
         'message': 'To do list updated successfully',
-        'data': {
-            'id': obj.id,
-            'title': obj.title,
-            'completed': obj.completed
-        }
+        'data': _serialize_todo(obj)
     })
 
 def remove_completed(request):

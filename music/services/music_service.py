@@ -1,6 +1,7 @@
 from music.models.music_model import Music
 from django.http import JsonResponse, FileResponse
 from users.models.user_model import User
+from music.services.audio_stream import audio_response
 import os
 import json
 
@@ -222,7 +223,7 @@ def search_music(request):
 
 # media
 def get_audio(request, filename):
-    return FileResponse(open(f'media/music/audio/{filename}', 'rb'), content_type='audio/mpeg')
+    return audio_response(request, filename)
 
 def get_cover(request, filename):
     return FileResponse(open(f'media/music/covers/{filename}', 'rb'), content_type='image/jpeg')

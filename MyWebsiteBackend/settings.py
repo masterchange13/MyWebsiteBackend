@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'users',
     'config',
     'music',
+    'video.apps.VideoConfig',
     'chat',
     'document',
     'file',
@@ -140,6 +141,18 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Monitor the backend host; auto detects Windows, Linux and Raspberry Pi.
+SYSTEM_MONITOR_PLATFORM = os.environ.get('SYSTEM_MONITOR_PLATFORM', 'auto')
+# Empty means Windows system drive or Linux root filesystem.
+SYSTEM_MONITOR_DISK_PATH = os.environ.get('SYSTEM_MONITOR_DISK_PATH', '')
+
+# Server camera: auto, opencv (USB/webcam), or picamera2 (Raspberry Pi CSI).
+VIDEO_CAMERA_BACKEND = os.environ.get('VIDEO_CAMERA_BACKEND', 'auto')
+VIDEO_CAMERA_DEVICE = os.environ.get('VIDEO_CAMERA_DEVICE', 'auto')
+VIDEO_CAMERA_WIDTH = os.environ.get('VIDEO_CAMERA_WIDTH', '640')
+VIDEO_CAMERA_HEIGHT = os.environ.get('VIDEO_CAMERA_HEIGHT', '480')
+VIDEO_CAMERA_FPS = os.environ.get('VIDEO_CAMERA_FPS', '15')
 
 ALLOWED_HOSTS = ['*']
 

@@ -39,6 +39,7 @@ urlpatterns = [
     path("feedback/submit/", config_views.submit_feedback),
     path("feedback/list/", config_views.list_feedback),
     path("system-status/", config_views.system_status),
+    path('', include('video.urls')),
     path('test/', login_views.index, name='index'),
     path('admin/', admin.site.urls),
     path('users/', include(users_urls.urlpatten)),

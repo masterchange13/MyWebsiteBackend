@@ -6,3 +6,4 @@ django_venv/
 media/
 
 django_venv_bak/
+qi_men_dun_jia/local_secret.py

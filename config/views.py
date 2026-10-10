@@ -182,5 +182,5 @@ def system_status(request):
     from config.system_status import get_system_status
     data = get_system_status()
     if data is None:
-        return JsonResponse({'code': 500, 'message': 'psutil 未安装', 'data': {}}, status=500)
+        return JsonResponse({'code': 503, 'message': '系统监控缺少 psutil，请在后端运行环境中安装 requirements.txt 中的依赖并重启服务。', 'data': {}}, status=503)
     return JsonResponse({'code': 200, 'message': 'success', 'data': data})
