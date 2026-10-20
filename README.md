@@ -1,5 +1,7 @@
 # MyWebsiteBackend
 
+网站终端、电子书与 Navigator HTTPS/CSRF 配置见 [新增功能部署说明](WEB_FEATURES.md)。
+
 系统监控支持自动识别树莓派、Windows 和 Linux，安装、平台设置及故障排查见 [系统监控部署说明](SYSTEM_MONITOR.md)。
 
 Video 支持服务器 USB 摄像头及树莓派 CSI 摄像头，设备选择、依赖与代理配置见 [摄像头部署说明](VIDEO_CAMERA.md)。

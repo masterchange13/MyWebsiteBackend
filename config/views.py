@@ -12,8 +12,8 @@ from users.models.user_model import User
 
 DEFAULT_TOP_LEVEL_ORDER = ['media', 'tools', 'chat', 'navigator', 'blog', 'guide', 'feedback', 'author', 'siteSettings', 'systemMonitor']
 DEFAULT_SUBMENU_ORDERS = {
-    'media': ['video', 'document', 'music', 'transfer', 'todoList'],
-    'tools': ['agent', 'qiMen', 'timer', 'calculator', 'timetable'],
+    'media': ['video', 'document', 'music', 'ebooks', 'transfer', 'todoList'],
+    'tools': ['agent', 'qiMen', 'timer', 'calculator', 'decision', 'email', 'timetable', 'terminal'],
 }
 DEFAULT_WEBSITE_SETTINGS = {
     'site_title': 'Raspberrypi Console',
@@ -32,6 +32,13 @@ DEFAULT_WEBSITE_SETTINGS = {
 @ensure_csrf_cookie
 def csrf(request):
     return JsonResponse({'code': 200, 'message': 'CSRF cookie set', 'data': {}})
+
+
+def csrf_failure(request, reason=''):
+    return JsonResponse({
+        'code': 403, 'error': 'csrf_failed', 'data': {},
+        'message': '请求未通过 CSRF 校验，请刷新页面重试；若仍失败，请检查访问域名和 HTTPS 代理配置。',
+    }, status=403)
 
 def _get_request_user(request):
     username = request.session.get('user')

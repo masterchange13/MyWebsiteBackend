@@ -1,4 +1,12 @@
 services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
   db:
     image: mysql:8.4
     restart: unless-stopped
@@ -23,11 +31,18 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       DJANGO_SECRET_KEY: "docker-dev-secret"
       DJANGO_DEBUG: "1"
       SYSTEM_MONITOR_PLATFORM: "${SYSTEM_MONITOR_PLATFORM:-auto}"
       SYSTEM_MONITOR_DISK_PATH: "${SYSTEM_MONITOR_DISK_PATH:-/}"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      TERMINAL_ENABLED: "${TERMINAL_ENABLED:-1}"
+      DJANGO_PUBLIC_ORIGINS: "${DJANGO_PUBLIC_ORIGINS:-}"
+      EBOOK_MAX_UPLOAD_MB: "${EBOOK_MAX_UPLOAD_MB:-50}"
       DB_NAME: my_website
       DB_USER: user
       DB_PASSWORD: "123456"
@@ -35,7 +50,10 @@ services:
       DB_PORT: "3306"
     ports:
       - "8088:8088"
+    volumes:
+      - ebooks_data:/app/media/ebooks
     command: sh -c "python manage.py migrate && daphne -b 0.0.0.0 -p 8088 MyWebsiteBackend.asgi:application"
 
 volumes:
   mysql_data:
+  ebooks_data:

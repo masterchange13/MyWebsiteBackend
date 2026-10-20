@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'config',
     'music',
     'video.apps.VideoConfig',
+    'terminal.apps.TerminalConfig',
+    'ebooks.apps.EbooksConfig',
     'chat',
     'document',
     'file',
@@ -154,22 +156,30 @@ VIDEO_CAMERA_WIDTH = os.environ.get('VIDEO_CAMERA_WIDTH', '640')
 VIDEO_CAMERA_HEIGHT = os.environ.get('VIDEO_CAMERA_HEIGHT', '480')
 VIDEO_CAMERA_FPS = os.environ.get('VIDEO_CAMERA_FPS', '15')
 
+TERMINAL_ENABLED = os.environ.get('TERMINAL_ENABLED', '1') == '1'
+TERMINAL_WORKDIR = os.environ.get('TERMINAL_WORKDIR', str(BASE_DIR))
+TERMINAL_SHELL = os.environ.get('TERMINAL_SHELL', '')
+TERMINAL_IDLE_TIMEOUT = max(60, int(os.environ.get('TERMINAL_IDLE_TIMEOUT', '600')))
+EBOOK_MAX_UPLOAD_MB = max(1, int(os.environ.get('EBOOK_MAX_UPLOAD_MB', '50')))
+
 ALLOWED_HOSTS = ['*']
 
-CSRF_TRUSTED_ORIGINS = [
+PUBLIC_ORIGINS = [
     "http://localhost:5173",
     "http://raspberrypi",
     "http://masterchange.natapp1.cc",
     "https://masterchange.natapp1.cc",
+    "https://l1z00505038.zicp.fun",
 ]
+PUBLIC_ORIGINS += [origin.strip().rstrip('/') for origin in os.environ.get('DJANGO_PUBLIC_ORIGINS', '').split(',') if origin.strip()]
+CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(PUBLIC_ORIGINS))
+CSRF_FAILURE_VIEW = 'config.views.csrf_failure'
+# Nginx supplies this header after terminating HTTPS.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOWED_ORIGINS = [
-    "http://masterchange.natapp1.cc",
-    "https://masterchange.natapp1.cc",
-    "http://raspberrypi",
-]
+CORS_ALLOWED_ORIGINS = CSRF_TRUSTED_ORIGINS.copy()
 
 # 👇 关键就是这 3 行（很多教程没写）
 CSRF_COOKIE_HTTPONLY = False

@@ -29,6 +29,10 @@ opencv-python-headless==4.11.0.86; sys_platform != "linux" or (platform_machine 
 # System monitor: CPU, memory, disks, network and supported temperature sensors.
 # Shared by Windows/Linux/Raspberry Pi; platform selection needs no extra package.
 psutil==7.1.3
+# Interactive terminal adapters selected for the backend host platform.
+pywinpty==2.0.15; sys_platform == "win32"
+ptyprocess==0.7.0; sys_platform != "win32"
+defusedxml==0.7.1
 pyasn1==0.6.2
 pyasn1_modules==0.4.2
 pycparser==3.0

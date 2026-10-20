@@ -40,6 +40,8 @@ urlpatterns = [
     path("feedback/list/", config_views.list_feedback),
     path("system-status/", config_views.system_status),
     path('', include('video.urls')),
+    path('terminal/', include('terminal.urls')),
+    path('ebooks/', include('ebooks.urls')),
     path('test/', login_views.index, name='index'),
     path('admin/', admin.site.urls),
     path('users/', include(users_urls.urlpatten)),

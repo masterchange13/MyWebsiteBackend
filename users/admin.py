@@ -9,5 +9,7 @@ class NavigatorAdmin(admin.ModelAdmin):
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('id', 'username', 'email', 'created_time')
+    list_display = ('id', 'username', 'email', 'can_use_terminal', 'created_time')
+    list_editable = ('can_use_terminal',)
+    list_filter = ('can_use_terminal',)
     search_fields = ('username', 'email')
