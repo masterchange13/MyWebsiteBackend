@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from django.apps import apps
-from django.test import AsyncRequestFactory, SimpleTestCase, override_settings
+from django.test import AsyncRequestFactory, SimpleTestCase, TestCase, override_settings
 from django.urls import resolve
 
 from video import camera, views as video_views
@@ -216,7 +216,7 @@ class CameraLifecycleTests(SimpleTestCase):
 @override_settings(ROOT_URLCONF='video.urls')
 class VideoEndpointTests(SimpleTestCase):
     def setUp(self):
-        for target, value in [('_get_request_user', Mock(return_value=object())), ('camera_manager', Mock())]:
+        for target, value in [('_get_request_user', Mock(return_value=SimpleNamespace(is_advanced=True))), ('camera_manager', Mock())]:
             patcher = patch.object(video_views, target, value)
             patcher.start()
             self.addCleanup(patcher.stop)

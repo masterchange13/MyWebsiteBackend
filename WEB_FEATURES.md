@@ -20,28 +20,28 @@ npm run build
 
 重启后端，同步根目录 Nginx 配置并检查、重载。示例代理端口是 8084，须与实际 Daphne 端口一致。终端新增 `/terminal/ws/` 的 WebSocket 代理；上传限制设置为 55 MB，配合默认 50 MB 电子书限制。HTTPS 页面使用 WSS。
 
-## 终端权限与平台
+## 用户等级、摄像头与终端权限
 
-**终端权限由数据库 `users_user.can_use_terminal` 字段控制，默认为关闭。** 旧的 `TERMINAL_ALLOWED_USERS` 环境变量不再用于授权。先执行数据库迁移，再为已有网站账号授权；这与操作系统用户名无关。保留现有登录、CSRF 校验，连接还校验 Origin、会话和有效期 60 秒的一次性连接令牌。
+**摄像头与终端统一由数据库 `users_user.is_advanced` 字段控制。** `1` 为高级用户，`0` 为普通用户，默认普通用户。旧的 `TERMINAL_ALLOWED_USERS` 环境变量不再用于授权。迁移 `0011` 将已有 `can_use_terminal` 字段重命名并保留值：此前有终端权限的账号将成为高级用户，也可使用摄像头。无需自动创建或按用户名默认提权。终端保留登录、CSRF、Origin、会话和一次性连接令牌校验；摄像头状态和视频流均检查高级用户权限。
 
 Windows / Linux / 树莓派均可在后端目录、实际运行服务的 Python 环境中执行：
 
 ```sh
 python manage.py migrate
-python manage.py set_terminal_permission admin
+python manage.py set_user_level admin advanced
 ```
 
 撤销权限：
 
 ```sh
-python manage.py set_terminal_permission admin --revoke
+python manage.py set_user_level admin normal
 ```
 
-也可以登录 Django 管理后台 `/admin/`，进入 **Users → Users**，勾选或取消对应网站用户的 **终端权限** 并保存。登录管理后台使用 Django 超级用户（可通过 `python manage.py createsuperuser` 创建），与网站自定义的 `admin` 账号是两套用户记录。普通网站用户不能通过注册或个人资料接口自行提权。
+也可以登录 Django 管理后台 `/admin/`，进入 **Users → Users**，勾选或取消对应网站用户的 **高级用户** 并保存。登录管理后台使用 Django 超级用户（可通过 `python manage.py createsuperuser` 创建），与网站自定义的 `admin` 账号是两套用户记录。个人资料页显示用户类型，但不能修改。普通网站用户不能通过注册或个人资料接口自行提权。旧命令 `set_terminal_permission` 兼容保留，但会同步变更摄像头和终端权限。
 
-授权或撤销写入数据库后不需要重启，当前连接每 5 秒检查一次权限，撤销后自动释放终端。部署新代码时仍需重启后端。默认不会自动给任何同名 `admin` 账号提权。
+授权或撤销写入数据库后不需要重启，当前终端和摄像头流约每 5 秒检查一次登录及权限，降级或退出登录后自动结束当前连接。部署新代码时仍需重启后端。
 
-Docker Compose 开通权限：`docker compose exec backend python manage.py set_terminal_permission admin`；撤销时在命令末尾添加 `--revoke`。
+Docker Compose 升级账号：`docker compose exec backend python manage.py set_user_level admin advanced`；降级时将 `advanced` 改为 `normal`。
 
 | 环境变量 | 默认 | 说明 |
 | --- | --- | --- |
@@ -59,6 +59,8 @@ Windows 优先使用 PowerShell 7、Windows PowerShell，再回退 CMD，PTY 依
 支持交互输入、上下键历史、Tab、Ctrl+C、窗口尺寸变化及手机端快捷按键。新会话不持久保存 Shell 历史；离开页面、断开、超时后释放 Shell 及其子进程。每个有权限的账号同时最多一个终端；同一部署多个后端进程时使用现有 Redis 缓存协调连接。
 
 当前页面右上角的 **断开连接** 用于结束本页会话；连接过程中可点击 **取消连接**。若提示账号已有连接，可直接点击 **关闭已有连接**，等待释放后点击 **连接终端**，无需找到原标签页。关闭操作仅作用于当前登录账号的原终端，并会结束其中运行的命令。服务异常退出留下的占用会在最后续租后 45 秒内过期，正常在线连接会自动续租。此入口需要前后端一起更新部署。
+
+连接后可点击黑色终端区域输入；手机或终端输入焦点不可用时，可使用下方命令输入框，按 Enter 或点击 **执行**，命令发送到同一个交互式 Shell。启动消息先发送连接就绪，再发送 Shell 输出，避免丢失终端对 Shell 初始化查询的回复；服务器读写异常会显示错误并关闭连接。
 
 ## 电子书
 

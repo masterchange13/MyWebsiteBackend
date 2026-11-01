@@ -86,8 +86,10 @@ class TerminalConsumer(AsyncWebsocketConsumer):
         self.loop = asyncio.get_running_loop()
         self.reader = threading.Thread(target=self.read_output, daemon=True, name='web-terminal-output')
         self.reader.start()
-        self.pump = asyncio.create_task(self.send_output())
+        # Shell startup may query the browser terminal (e.g. cursor position).
+        # Enable browser input before any output can trigger its reply.
         await self.send(text_data=json.dumps({'type': 'ready'}))
+        self.pump = asyncio.create_task(self.send_output())
 
     def read_output(self):
         try:
@@ -177,7 +179,11 @@ class TerminalConsumer(AsyncWebsocketConsumer):
                     await self.close(code=4403)
                     return
                 await self.send(text_data=json.dumps({'type': 'pong'}))
-        except (ValueError, TypeError, EOFError, OSError):
+        except (EOFError, OSError):
+            logger.exception('Terminal input or resize failed')
+            await self.send(text_data=json.dumps({'type': 'error', 'message': '服务器终端读写失败，请断开后重新连接，并检查后端日志。'}))
+            await self.close(code=4500)
+        except (ValueError, TypeError):
             return
 
     async def disconnect(self, close_code):

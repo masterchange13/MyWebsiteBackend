@@ -1,0 +1,16 @@
+from importlib import import_module
+
+from django.conf import settings
+from users.models.user_model import User
+
+
+def current_user(session):
+    username = session.get('user') if session else None
+    return User.objects.filter(username=username).first() if username else None
+
+
+def refresh_user(session):
+    if not session or not session.session_key:
+        return None
+    store = import_module(settings.SESSION_ENGINE).SessionStore(session_key=session.session_key)
+    return current_user(store)

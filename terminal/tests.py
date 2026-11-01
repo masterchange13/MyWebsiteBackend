@@ -21,7 +21,7 @@ from .routing import websocket_urlpatterns
 class TerminalApiTests(TestCase):
     def setUp(self):
         cache.clear()
-        self.user = User.objects.create(username='terminal-owner', password='unused', email='owner@example.test', can_use_terminal=True)
+        self.user = User.objects.create(username='terminal-owner', password='unused', email='owner@example.test', is_advanced=True)
 
     def login(self, user):
         session = self.client.session
@@ -74,9 +74,9 @@ class TerminalApiTests(TestCase):
 
     def test_database_permission_change_takes_effect_without_restart(self):
         self.login(self.user)
-        User.objects.filter(pk=self.user.pk).update(can_use_terminal=False)
+        User.objects.filter(pk=self.user.pk).update(is_advanced=False)
         self.assertEqual(self.client.post('/terminal/session/').status_code, 403)
-        User.objects.filter(pk=self.user.pk).update(can_use_terminal=True)
+        User.objects.filter(pk=self.user.pk).update(is_advanced=True)
         self.assertEqual(self.client.post('/terminal/session/').status_code, 200)
 
     @override_settings(TERMINAL_ALLOWED_USERS=['reader'])
@@ -88,10 +88,10 @@ class TerminalApiTests(TestCase):
     def test_management_command_grants_and_revokes_existing_account(self):
         call_command('set_terminal_permission', self.user.username, '--revoke', stdout=StringIO())
         self.user.refresh_from_db()
-        self.assertFalse(self.user.can_use_terminal)
+        self.assertFalse(self.user.is_advanced)
         call_command('set_terminal_permission', self.user.username, stdout=StringIO())
         self.user.refresh_from_db()
-        self.assertTrue(self.user.can_use_terminal)
+        self.assertTrue(self.user.is_advanced)
         with self.assertRaises(CommandError):
             call_command('set_terminal_permission', 'missing-account', stdout=StringIO())
         self.assertFalse(User.objects.filter(username='missing-account').exists())
@@ -99,16 +99,16 @@ class TerminalApiTests(TestCase):
     def test_registration_and_profile_update_cannot_grant_terminal_permission(self):
         response = self.client.post('/users/register/', json.dumps({
             'username': 'new-reader', 'password': 'test-only-password',
-            'email': 'new-reader@example.test', 'can_use_terminal': True,
+            'email': 'new-reader@example.test', 'is_advanced': True,
         }), content_type='application/json')
         self.assertEqual(response.status_code, 200)
         other = User.objects.get(username='new-reader')
-        self.assertFalse(other.can_use_terminal)
+        self.assertFalse(other.is_advanced)
         self.login(other)
-        response = self.client.post('/users/update/', json.dumps({'can_use_terminal': True}), content_type='application/json')
+        response = self.client.post('/users/update/', json.dumps({'is_advanced': True}), content_type='application/json')
         self.assertEqual(response.status_code, 200)
         other.refresh_from_db()
-        self.assertFalse(other.can_use_terminal)
+        self.assertFalse(other.is_advanced)
 
     def test_token_issuance_requires_csrf(self):
         client = Client(enforce_csrf_checks=True)
@@ -147,7 +147,7 @@ class FakeConsole:
 class TerminalSocketTests(TransactionTestCase):
     def setUp(self):
         cache.clear()
-        User.objects.create(username='terminal-owner', password='unused', email='socket@example.test', can_use_terminal=True)
+        User.objects.create(username='terminal-owner', password='unused', email='socket@example.test', is_advanced=True)
         session = self.client.session
         session['user'] = 'terminal-owner'
         session.save()
@@ -178,6 +178,28 @@ class TerminalSocketTests(TransactionTestCase):
             self.assertEqual(console.sizes, [(120, 20)])
             await connection.disconnect()
         self.assertTrue(console.closed)
+
+    async def test_ready_precedes_startup_output_and_terminal_reply_is_writable(self):
+        console = FakeConsole()
+        console.output.put('\x1b[6n')
+        with patch('terminal.consumers.Console', return_value=console):
+            connection = self.communicator()
+            self.assertTrue((await connection.connect())[0])
+            self.assertEqual((await connection.receive_json_from())['type'], 'ready')
+            self.assertEqual((await connection.receive_json_from())['data'], '\x1b[6n')
+            await connection.send_json_to({'type': 'input', 'data': '\x1b[1;1R'})
+            await connection.send_json_to({'type': 'ping'})
+            await connection.receive_json_from()
+            self.assertEqual(console.writes, ['\x1b[1;1R'])
+            await connection.disconnect()
+
+    async def test_downgraded_user_cannot_open_socket_with_previously_issued_token(self):
+        await sync_to_async(lambda: User.objects.filter(username='terminal-owner').update(is_advanced=False))()
+        with patch('terminal.consumers.Console') as console:
+            connection = self.communicator()
+            self.assertFalse((await connection.connect())[0])
+            await connection.disconnect()
+            console.assert_not_called()
 
     async def test_missing_invalid_and_cross_origin_tokens_are_rejected(self):
         for token, origin, cookie in [('', 'https://l1z00505038.zicp.fun', self.cookie),
@@ -259,7 +281,7 @@ class TerminalSocketTests(TransactionTestCase):
             connection = self.communicator()
             self.assertTrue((await connection.connect())[0])
             await connection.receive_json_from()
-            await sync_to_async(lambda: User.objects.filter(username='terminal-owner').update(can_use_terminal=False))()
+            await sync_to_async(lambda: User.objects.filter(username='terminal-owner').update(is_advanced=False))()
             await connection.send_json_to({'type': 'ping'})
             result = await connection.receive_output()
             self.assertEqual(result['type'], 'websocket.close')

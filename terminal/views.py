@@ -16,7 +16,7 @@ def _authorize(request):
     if not user:
         return None, JsonResponse({'code': 401, 'message': '请先登录。', 'data': {}}, status=401)
     if not allowed(user):
-        return None, JsonResponse({'code': 403, 'message': '当前账号没有终端权限，请联系网站管理员。', 'data': {}}, status=403)
+        return None, JsonResponse({'code': 403, 'message': '终端仅限高级用户使用，或管理员已关闭终端功能。', 'data': {}}, status=403)
     return user, None
 
 

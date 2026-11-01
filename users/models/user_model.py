@@ -6,7 +6,7 @@ class User(models.Model):
     password = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     created_time = models.DateTimeField(auto_now_add=True)
-    can_use_terminal = models.BooleanField(
-        default=False, verbose_name='终端权限',
-        help_text='允许此网站账号连接服务器终端，命令以运行后端的系统账号身份执行。',
+    is_advanced = models.BooleanField(
+        default=False, verbose_name='高级用户',
+        help_text='高级用户可使用服务器摄像头和终端；未勾选为普通用户。',
     )

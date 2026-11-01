@@ -268,12 +268,14 @@ def multipart_frame(frame):
             str(len(frame)).encode() + b'\r\n\r\n' + frame + b'\r\n')
 
 
-def stream_frames(manager):
+def stream_frames(manager, can_stream=None):
     manager.subscribe()
     sequence = -1
     try:
         while True:
             sequence, frame = manager.wait_frame(sequence)
+            if can_stream and not can_stream():
+                break
             yield multipart_frame(frame)
     except CameraError:
         return
@@ -281,12 +283,14 @@ def stream_frames(manager):
         manager.unsubscribe()
 
 
-async def async_stream_frames(manager):
+async def async_stream_frames(manager, can_stream=None):
     manager.subscribe()
     sequence = -1
     try:
         while True:
             sequence, frame = await asyncio.to_thread(manager.wait_frame, sequence)
+            if can_stream and not await can_stream():
+                break
             yield multipart_frame(frame)
     except CameraError:
         return

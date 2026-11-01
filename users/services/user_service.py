@@ -99,6 +99,7 @@ def get_me(request):
         'username': user,
         'email': u.email,
         'created_time': u.created_time.isoformat() if u.created_time else None,
+        'is_advanced': u.is_advanced,
     }
     return JsonResponse({'code': 200, 'message': 'success', 'data': data})
 
@@ -120,6 +121,7 @@ def get_user_detail(request, user_id=None):
             'username': u.username,
             'email': u.email,
             'created_time': u.created_time.isoformat() if u.created_time else None,
+            'is_advanced': u.is_advanced,
         }
         return JsonResponse({'code': 200, 'message': 'success', 'data': data})
     except User.DoesNotExist:
